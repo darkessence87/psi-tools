@@ -28,10 +28,6 @@ message ("Build out: ${BUILD_OUT}")
 
 # functions
 function(psi_make_tests name src libs)
-    if (WIN32)
-        set (PLATFORM_LIBS "dbghelp.dll" "ntdll.dll")
-    endif()
-
     include_directories (${3rdPARTY_DIR}/tests/include)
     link_directories (${3rdPARTY_DIR}/tests/lib/${SUB_DIR_LIBS})
     
@@ -39,7 +35,6 @@ function(psi_make_tests name src libs)
     add_executable (${fileName} ${PROJECT_SOURCE_DIR}/tests/EntryPoint.cpp ${src})
     target_link_libraries (${fileName}
         ${libs}
-        ${PLATFORM_LIBS}
         gmock
         gmock_main
         gtest
@@ -48,14 +43,7 @@ function(psi_make_tests name src libs)
 endfunction()
 
 function(psi_make_examples name src libs)
-    if (WIN32)
-        set (PLATFORM_LIBS "dbghelp.dll" "ntdll.dll")
-    endif()
-
     set (fileName PSI_EXAMPLE_${name})
     add_executable (${fileName} ${src})
-    target_link_libraries (${fileName}
-        ${libs}
-        ${PLATFORM_LIBS}
-    )
+    target_link_libraries (${fileName} ${libs})
 endfunction()
