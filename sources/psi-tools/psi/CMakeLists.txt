@@ -3,15 +3,18 @@ include_directories(
 )
 
 set (SOURCES
+    src/psi/tools/ByteBuffer.cpp
+    src/psi/tools/Encryptor.cpp
     src/psi/tools/Tools.cpp
 )
 
 add_library(psi-tools ${SOURCES})
 
-# set(TEST_SRC
-#     tests/
-# )
-# psi_make_tests("Tools" "${TEST_SRC}" "")
+set(TEST_SRC
+    tests/ByteBufferTests.cpp
+    tests/EncryptorTests.cpp
+)
+psi_make_tests("Tools" "${TEST_SRC}" "psi-tools")
 
 set(EXAMPLE_SRC
     examples/EntryPoint.cpp

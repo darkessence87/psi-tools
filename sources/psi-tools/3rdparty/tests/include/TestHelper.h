@@ -5,24 +5,24 @@
 #include <chrono>
 #include <functional>
 
-namespace psi {
+namespace psi::test {
 
-// class TestHelper
-// {
-// public:
-//     static void timeFn(const auto &name, auto &&fn, int N)
-//     {
-//         using namespace std::chrono;
+class TestHelper
+{
+public:
+    static void timeFn(const auto &name, auto &&fn, int N)
+    {
+        using namespace std::chrono;
 
-//         const auto &start = high_resolution_clock::now();
-//         for (int i = 0; i < N; ++i) {
-//             fn();
-//         }
-//         const auto &end = high_resolution_clock::now();
-//         const auto &totalTime = (end - start).count();
-//         std::cout << "[" << name << "] average fn() us: " << totalTime / 1000.0 / N << std::endl;
-//     }
-// };
+        const auto &start = high_resolution_clock::now();
+        for (int i = 0; i < N; ++i) {
+            fn();
+        }
+        const auto &end = high_resolution_clock::now();
+        const auto &totalTime = (end - start).count();
+        std::cout << "[" << name << "] average fn() us: " << totalTime / 1000.0 / N << std::endl;
+    }
+};
 
 template <typename C>
 struct MockedFn;
@@ -69,4 +69,4 @@ struct MockedFn<std::function<R(A1, A2)>> : TestFn<std::function<R(A1, A2)>> {
 //     MOCK_METHOD(R, f, (Args...), (const, override));
 // };
 
-} // namespace psi
+} // namespace psi::test
