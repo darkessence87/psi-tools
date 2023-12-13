@@ -13,6 +13,7 @@ add_library(psi-tools ${SOURCES})
 set(TEST_SRC
     tests/ByteBufferTests.cpp
     tests/EncryptorTests.cpp
+    tests/ToolsTests.cpp
 )
 psi_make_tests("Tools" "${TEST_SRC}" "psi-tools")
 

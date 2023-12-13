@@ -27,17 +27,16 @@ public:
     ByteBuffer(size_t);
 
     /**
-     * @brief Construct a new Byte Buffer object by moving existing byte buffer into ByteBuffer as r-value.
+     * @brief Construct a new Byte Buffer object by moving an existing byte buffer into ByteBuffer as r-value.
      * 
      */
-    ByteBuffer(uint8_t &&, size_t);
+    explicit ByteBuffer(uint8_t &&, size_t);
 
     /**
-     * @brief Construct a new Byte Buffer object by moving existing byte buffer into ByteBuffer as pointer.
-     * In result ByteBuffer is responsible for manage memory of provided peace of memory.
+     * @brief Construct a new Byte Buffer object by moving an existing byte buffer into ByteBuffer as l-value.
      * 
      */
-    ByteBuffer(uint8_t *, size_t);
+    explicit ByteBuffer(uint8_t *, size_t);
 
     /**
      * @brief Destroy the Byte Buffer object. Frees memory.
@@ -269,10 +268,8 @@ public:
      */
     size_t size() const;
 
-private:
-    size_t m_bufferSz;
-
 protected:
+    size_t m_bufferSz = 0u;
     uint8_t *m_buffer = nullptr;
     mutable size_t m_readIndex = 0u;
     mutable size_t m_writeIndex = 0u;

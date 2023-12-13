@@ -31,14 +31,15 @@ ByteBuffer::ByteBuffer(size_t sz)
 ByteBuffer::ByteBuffer(uint8_t &&arr, size_t sz)
     : m_bufferSz(sz)
     , m_buffer(std::move(&arr))
+    , m_writeIndex(sz)
 {
 }
 
 ByteBuffer::ByteBuffer(uint8_t *arr, size_t sz)
     : m_bufferSz(sz)
-    , m_buffer(new uint8_t[m_bufferSz]())
+    , m_buffer(std::move(arr))
+    , m_writeIndex(sz)
 {
-    writeArray(arr, m_bufferSz);
 }
 
 ByteBuffer::~ByteBuffer()
@@ -82,8 +83,7 @@ ByteBuffer &ByteBuffer::operator=(const ByteBuffer &bb)
 void ByteBuffer::clear()
 {
     memset(m_buffer, 0, m_bufferSz);
-    m_readIndex = 0;
-    m_writeIndex = 0;
+    reset();
 }
 
 void ByteBuffer::reset() const
@@ -171,7 +171,7 @@ const std::string ByteBuffer::asHexString() const
 const std::string ByteBuffer::asHexStringFormatted() const
 {
     std::ostringstream os;
-    os << "[";
+    os << "[ ";
 
     for (size_t i = 0; i < m_bufferSz; ++i) {
         uint16_t n = m_buffer[i];

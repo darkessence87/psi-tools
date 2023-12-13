@@ -54,7 +54,7 @@ TEST(EncryptorTests, Aes256_GenerateRoundKeys)
         0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
         0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
     };
-    const std::string expectedEnhancedKey1 = "[\
+    const std::string expectedEnhancedKey1 = "[ \
 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 \
 62 63 63 63 62 63 63 63 62 63 63 63 62 63 63 63 aa fb fb fb aa fb fb fb aa fb fb fb aa fb fb fb \
 6f 6c 6c cf 0d 0f 0f ac 6f 6c 6c cf 0d 0f 0f ac 7d 8d 8d 6a d7 76 76 91 7d 8d 8d 6a d7 76 76 91 \
@@ -69,7 +69,7 @@ e7 b0 e8 9c 43 47 78 8b 16 76 0b 7b 8e b9 1a 62 74 ed 0b a1 73 9b 7e 25 22 51 ad
         0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
         0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
     };
-    const std::string expectedEnhancedKey2 = "[\
+    const std::string expectedEnhancedKey2 = "[ \
 ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff \
 e8 e9 e9 e9 17 16 16 16 e8 e9 e9 e9 17 16 16 16 0f b8 b8 b8 f0 47 47 47 0f b8 b8 b8 f0 47 47 47 \
 4a 49 49 65 5d 5f 5f 73 b5 b6 b6 9a a2 a0 a0 8c 35 58 58 dc c5 1f 1f 9b ca a7 a7 23 3a e0 e0 64 \
@@ -84,7 +84,7 @@ fc 22 34 91 73 b3 5c cf af 9e 35 db c5 ee 1e 05 06 95 ed 13 2d 7b 41 84 6e de 24
         0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f,
         0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19, 0x1a, 0x1b, 0x1c, 0x1d, 0x1e, 0x1f,
     };
-    const std::string expectedEnhancedKey3 = "[\
+    const std::string expectedEnhancedKey3 = "[ \
 00 01 02 03 04 05 06 07 08 09 0a 0b 0c 0d 0e 0f 10 11 12 13 14 15 16 17 18 19 1a 1b 1c 1d 1e 1f \
 a5 73 c2 9f a1 76 c4 98 a9 7f ce 93 a5 72 c0 9c 16 51 a8 cd 02 44 be da 1a 5d a4 c1 06 40 ba de \
 ae 87 df f0 0f f1 1b 68 a6 8e d5 fb 03 fc 15 67 6d e1 f1 48 6f a5 4f 92 75 f8 eb 53 73 b8 51 8d \
