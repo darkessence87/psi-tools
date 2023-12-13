@@ -17,7 +17,6 @@ set(TEST_SRC
 )
 psi_make_tests("Tools" "${TEST_SRC}" "psi-tools")
 
-set(EXAMPLE_SRC
-    examples/EntryPoint.cpp
-)
-psi_make_examples("1.0_Simple_Tools" "${EXAMPLE_SRC}" "psi-tools")
+psi_make_examples("1_ToolsExamples" "examples/1_ToolsExamples.cpp" "psi-tools")
+psi_make_examples("2_ByteBufferExamples" "examples/2_ByteBufferExamples.cpp" "psi-tools")
+psi_make_examples("3_EncryptorExamples" "examples/3_EncryptorExamples.cpp" "psi-tools")
