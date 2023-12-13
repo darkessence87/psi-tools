@@ -3,6 +3,6 @@
 - *Encryptor*. Is used for encode/decode data to/from Base64/AES256 formats.
 
 # Usage examples
-* [1 Tools example](https://github.com/darkessence87/psi-tools/blob/master/sources/psi-tools/psi/examples/1_ToolsExamples.cpp)
-* [2 ByteBuffer example](https://github.com/darkessence87/psi-tools/blob/master/sources/psi-tools/psi/examples/2_ByteBufferExamples.cpp)
-* [3 Encryptor example](https://github.com/darkessence87/psi-tools/blob/master/sources/psi-tools/psi/examples/3_EncryptorExamples.cpp)
+* [1 Tools example](https://github.com/darkessence87/psi-tools/blob/master/psi/examples/1_ToolsExamples.cpp)
+* [2 ByteBuffer example](https://github.com/darkessence87/psi-tools/blob/master/psi/examples/2_ByteBufferExamples.cpp)
+* [3 Encryptor example](https://github.com/darkessence87/psi-tools/blob/master/psi/examples/3_EncryptorExamples.cpp)
