@@ -5,5 +5,6 @@ project(${projectName})
 set (3rdPARTY_DIR "${PROJECT_SOURCE_DIR}/3rdparty")
 
 include (compiler.cmake)
+include (dependencies.cmake)
 
 add_subdirectory (psi)
