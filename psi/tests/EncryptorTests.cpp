@@ -510,7 +510,7 @@ TEST(EncryptorTests, rotWord)
     // psi::test::TestHelper::timeFn("rotWord_new", [&]() { Encryptor::rotWord2(block); }, 100'000'000);
 }
 
-TEST(EncryptorTests, DISABLED_generateSessionKey)
+TEST(EncryptorTests, generateSessionKey)
 {
     std::vector<std::string> keyStrs;
     auto comparator = [](const std::vector<uint64_t> &a, const std::vector<uint64_t> &b) {
@@ -528,6 +528,7 @@ TEST(EncryptorTests, DISABLED_generateSessionKey)
 
     // generate N keys
     const size_t N = 1'000'000;
+    // const size_t N = 10;
     for (size_t i = 0; i < N; ++i) {
         const auto key = Encryptor::generateSessionKey();
         keyStrs.emplace_back(key.asHexString());
@@ -535,6 +536,10 @@ TEST(EncryptorTests, DISABLED_generateSessionKey)
         // if insertion failed that means that session key is NOT unique
         if (i != 0) {
             ASSERT_TRUE(itr.second);
+
+            if (i == 1) {
+                std::cout << key.asHexStringFormatted() << std::endl;
+            }
         }
     }
 }

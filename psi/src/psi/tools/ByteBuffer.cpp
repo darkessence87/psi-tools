@@ -42,6 +42,13 @@ ByteBuffer::ByteBuffer(uint8_t *arr, size_t sz)
 {
 }
 
+ByteBuffer::ByteBuffer(const std::string &data)
+    : m_bufferSz(data.size())
+    , m_buffer(new uint8_t[m_bufferSz]())
+{
+    writeString(data);
+}
+
 ByteBuffer::~ByteBuffer()
 {
     if (m_buffer) {
@@ -202,6 +209,16 @@ size_t ByteBuffer::size() const
     return m_bufferSz;
 }
 
+size_t ByteBuffer::length() const
+{
+    return m_writeIndex;
+}
+
+size_t ByteBuffer::remainingLength() const
+{
+    return m_writeIndex - m_readIndex;
+}
+
 bool ByteBuffer::writeString(const std::string &data)
 {
     const auto sz = data.size();
@@ -276,6 +293,27 @@ ByteBuffer ByteBuffer::readToByteBuffer(const size_t N) const
     m_readIndex += sz;
 
     return ByteBuffer(std::move(*temp), sz);
+}
+
+bool ByteBuffer::readToByteBuffer(ByteBuffer &buffer, const size_t N) const
+{
+    const auto sz = N;
+    if (m_readIndex + sz > m_bufferSz) {
+        LOG_ERROR("Data (size: " << sz << ") cannot be read. " << (m_bufferSz - m_readIndex)
+                                 << " bytes left to reach the end.");
+        return false;
+    }
+
+    if (buffer.m_writeIndex + sz > buffer.m_bufferSz) {
+        LOG_ERROR("Data (size: " << sz << ") cannot be written. " << (buffer.m_bufferSz - buffer.m_writeIndex)
+                                 << " bytes left to reach the end.");
+        return false;
+    }
+
+    readBytes(buffer.m_buffer + buffer.m_writeIndex, sz);
+    buffer.m_writeIndex += sz;
+
+    return true;
 }
 
 } // namespace psi::tools

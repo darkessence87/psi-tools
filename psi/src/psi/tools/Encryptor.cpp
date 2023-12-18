@@ -600,15 +600,23 @@ ByteBuffer Encryptor::generateSessionKey()
 
     auto timePoint = high_resolution_clock::now();
     auto inMicroSec = duration_cast<microseconds>(timePoint.time_since_epoch());
-    uint32_t rand1 = inMicroSec.count() & 0xffffffff;
+    uint32_t rand1 = static_cast<uint32_t>(inMicroSec.count());
     srand(rand1);
-    uint32_t rand2 = static_cast<uint32_t>(rand() % 0xffffffff);
-    uint32_t rand3 = static_cast<uint32_t>(rand() % 0xffffffff);
-    uint32_t rand4 = static_cast<uint32_t>(rand() % 0xffffffff);
-    uint32_t rand5 = static_cast<uint32_t>(rand() % 0xffffffff);
-    uint32_t rand6 = static_cast<uint32_t>(rand() % 0xffffffff);
-    uint32_t rand7 = static_cast<uint32_t>(rand() % 0xffffffff);
-    uint32_t rand8 = static_cast<uint32_t>(rand() % 0xffffffff);
+    uint16_t rand2 = static_cast<uint16_t>(rand() % 0xffff);
+    uint16_t rand3 = static_cast<uint16_t>(rand() % 0xffff);
+    uint16_t rand4 = static_cast<uint16_t>(rand() % 0xffff);
+    uint16_t rand5 = static_cast<uint16_t>(rand() % 0xffff);
+    uint16_t rand6 = static_cast<uint16_t>(rand() % 0xffff);
+    uint16_t rand7 = static_cast<uint16_t>(rand() % 0xffff);
+    uint16_t rand8 = static_cast<uint16_t>(rand() % 0xffff);
+    uint16_t rand9 = static_cast<uint16_t>(rand() % 0xffff);
+    uint16_t randa = static_cast<uint16_t>(rand() % 0xffff);
+    uint16_t randb = static_cast<uint16_t>(rand() % 0xffff);
+    uint16_t randc = static_cast<uint16_t>(rand() % 0xffff);
+    uint16_t randd = static_cast<uint16_t>(rand() % 0xffff);
+    uint16_t rande = static_cast<uint16_t>(rand() % 0xffff);
+    uint16_t randf = static_cast<uint16_t>(rand() % 0xffff);
+    uint16_t rand0 = static_cast<uint16_t>(rand() % 0xffff);
 
     ByteBuffer sessionKey(32u);
     sessionKey.write(rand1);
@@ -619,6 +627,14 @@ ByteBuffer Encryptor::generateSessionKey()
     sessionKey.write(rand6);
     sessionKey.write(rand7);
     sessionKey.write(rand8);
+    sessionKey.write(rand9);
+    sessionKey.write(randa);
+    sessionKey.write(randb);
+    sessionKey.write(randc);
+    sessionKey.write(randd);
+    sessionKey.write(rande);
+    sessionKey.write(randf);
+    sessionKey.write(rand0);
 
     // LOG_TRACE_STATIC("sessionKey: " << sessionKey.asHexString());
 

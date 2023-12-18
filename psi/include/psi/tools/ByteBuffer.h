@@ -4,6 +4,8 @@
 #include <string>
 #include <vector>
 
+#include "psi/tools/Tools.h"
+
 namespace psi::tools {
 
 /**
@@ -37,6 +39,13 @@ public:
      * 
      */
     explicit ByteBuffer(uint8_t *, size_t);
+
+    /**
+     * @brief Construct a new Byte Buffer object by string
+     * 
+     * @param data string
+     */
+    ByteBuffer(const std::string &data);
 
     /**
      * @brief Destroy the Byte Buffer object. Frees memory.
@@ -95,6 +104,20 @@ public:
     }
 
     /**
+     * @brief Writes custom data into ByteBuffer in opposite endian.
+     * 
+     * @tparam T type of custom data
+     * @param data custom data
+     * @return true if operation is successful, writeIndex is increased by size of custom data type
+     * @return false if operation is failed, writeIndex is not changed
+     */
+    template <typename T>
+    bool writeSwapped(const T &data)
+    {
+        return write(swapEndian(data));
+    }
+
+    /**
      * @brief Reads custom data from ByteBuffer.
      * 
      * @tparam T type of custom data
@@ -115,6 +138,25 @@ public:
         m_readIndex += sz;
 
         return true;
+    }
+
+    /**
+     * @brief Reads custom data from ByteBuffer in opposite endian.
+     * 
+     * @tparam T type of custom data
+     * @param data custom data
+     * @return true if operation is successful, readIndex is increased by size of custom data type
+     * @return false if operation is failed, readIndex is not changed
+     */
+    template <typename T>
+    bool readSwapped(T &data) const
+    {
+        if (read(data)) {
+            data = swapEndian(data);
+            return true;
+        }
+
+        return false;
     }
 
     /**
@@ -165,6 +207,28 @@ public:
     }
 
     /**
+     * @brief Reads N bytes into custom data array from ByteBuffer.
+     * 
+     * @tparam T type of custom data array
+     * @tparam N number of elements in a custom data array
+     * @return true if operation is successful, readIndex is increased by total size of custom data type
+     * @return false if operation is failed, readIndex is not changed
+     */
+    template <typename T>
+    bool readBytes(T *data, const size_t sz) const
+    {
+        if (m_readIndex + sz > m_bufferSz) {
+            //LOG_ERROR("Data (size: " << sz << ") cannot be read. " << (m_bufferSz - m_readIndex) << " bytes left to reach the end.");
+            return false;
+        }
+
+        memcpy(data, m_buffer + m_readIndex, sz);
+        m_readIndex += sz;
+
+        return true;
+    }
+
+    /**
      * @brief Writes string data into ByteBuffer.
      * 
      * @param data string data
@@ -199,6 +263,16 @@ public:
      * @return ByteBuffer new ByteBuffer
      */
     ByteBuffer readToByteBuffer(const size_t N) const;
+
+    /**
+     * @brief Reads N number of bytes to existing ByteBuffer.
+     * 
+     * @param buffer target buffer
+     * @param N number of bytes to be read
+     * @return true if operation is successful, readIndex is increased by length of string
+     * @return false if operation is failed, readIndex is not changed
+     */
+    bool readToByteBuffer(ByteBuffer &buffer, const size_t N) const;
 
     /**
      * @brief Increases readIndex by N.
@@ -247,7 +321,7 @@ public:
 
     /**
      * @brief Converts ByteBuffer to string in hex format more readable for human.
-     * Additionally formatted like: "[01 04 fd ae 00 a0]"
+     * Additionally formatted like: "[ 01 04 fd ae 00 a0 ]"
      * 
      * @return const std::string string in hex format
      */
@@ -267,6 +341,20 @@ public:
      * @return size_t 
      */
     size_t size() const;
+
+    /**
+     * @brief Returns length of data of ByteBuffer.
+     * 
+     * @return size_t 
+     */
+    size_t length() const;
+
+    /**
+     * @brief Returns remaining length of data of ByteBuffer.
+     * 
+     * @return size_t 
+     */
+    size_t remainingLength() const;
 
 protected:
     size_t m_bufferSz = 0u;

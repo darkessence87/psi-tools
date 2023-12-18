@@ -79,6 +79,12 @@ TEST(ByteBufferTests, ctor_LValuedData)
     }
 }
 
+TEST(ByteBufferTests, ctor_string)
+{
+    ByteBuffer data("test");
+    EXPECT_EQ(data.asString(), "test");
+}
+
 TEST(ByteBufferTests, dtor)
 {
     const size_t N = 47u;
@@ -326,6 +332,25 @@ TEST(ByteBufferTests, size)
     EXPECT_EQ(data.size(), N);
 }
 
+TEST(ByteBufferTests, length)
+{
+    ByteBuffer data(20);
+    data.write(uint16_t(20));
+    EXPECT_EQ(data.length(), 2);
+}
+
+TEST(ByteBufferTests, remaininglength)
+{
+    ByteBuffer data(20);
+    data.write(uint64_t(20));
+    data.write(uint64_t(20));
+    EXPECT_EQ(data.remainingLength(), 16);
+    data.skip(8);
+    EXPECT_EQ(data.remainingLength(), 8);
+    data.skip(8);
+    EXPECT_EQ(data.remainingLength(), 0);
+}
+
 TEST(ByteBufferTests, writeString)
 {
     const size_t N = 10u;
@@ -386,6 +411,25 @@ TEST(ByteBufferTests, write)
     EXPECT_EQ(data.write(uint8_t(10u)), false);
 }
 
+TEST(ByteBufferTests, writeSwapped)
+{
+    const size_t N = 10u;
+    ByteBuffer data(N);
+
+    // write uint16_t, success
+    EXPECT_EQ(data.writeSwapped(uint16_t(10u)), true);
+    uint16_t a;
+    data.read(a);
+    EXPECT_EQ(a, 2560u);
+    // write uint64_t, success
+    EXPECT_EQ(data.writeSwapped(uint64_t(10u)), true);
+    uint64_t b;
+    data.read(b);
+    EXPECT_EQ(b, 720'575'940'379'279'360u);
+    // write uint8_t, failed because buffer is full
+    EXPECT_EQ(data.writeSwapped(uint8_t(10u)), false);
+}
+
 TEST(ByteBufferTests, read)
 {
     const size_t N = 10u;
@@ -404,6 +448,26 @@ TEST(ByteBufferTests, read)
     // read uint8_t, failed because nothing to read
     uint8_t c;
     EXPECT_EQ(data.read(c), false);
+}
+
+TEST(ByteBufferTests, readSwapped)
+{
+    const size_t N = 10u;
+    ByteBuffer data(N);
+    data.write(uint16_t(10u));
+    data.write(uint64_t(10u));
+
+    // read uint16_t, success
+    uint16_t a;
+    EXPECT_EQ(data.readSwapped(a), true);
+    EXPECT_EQ(a, 2560u);
+    // read uint64_t, success
+    uint64_t b;
+    EXPECT_EQ(data.readSwapped(b), true);
+    EXPECT_EQ(b, 720'575'940'379'279'360u);
+    // read uint8_t, failed because nothing to read
+    uint8_t c;
+    EXPECT_EQ(data.readSwapped(c), false);
 }
 
 TEST(ByteBufferTests, writeArray)
@@ -459,4 +523,46 @@ TEST(ByteBufferTests, readArray)
     // read uint8_t[2], failed because requsted data size is larger than left for reading in buffer
     uint8_t c[2];
     EXPECT_EQ(data.readArray(c), false);
+}
+
+TEST(ByteBufferTests, readBytes)
+{
+    ByteBuffer data1(20);
+    data1.writeString("123456789a");
+    uint8_t data2[10];
+    data1.readBytes(data2, 5);
+    EXPECT_EQ(data2[0], '1');
+    EXPECT_EQ(data2[1], '2');
+    EXPECT_EQ(data2[2], '3');
+    EXPECT_EQ(data2[3], '4');
+    EXPECT_EQ(data2[4], '5');
+}
+
+TEST(ByteBufferTests, readToByteBuffer_2)
+{
+    {
+        SCOPED_TRACE("// case 1. srcBuff no read bytes available");
+
+        ByteBuffer srcBuff("0123456789");
+        ByteBuffer tarBuff(20);
+        EXPECT_EQ(false, srcBuff.readToByteBuffer(tarBuff, 11));
+    }
+
+    {
+        SCOPED_TRACE("// case 2. tarBuff no write space available");
+
+        ByteBuffer srcBuff("0123456789a");
+        ByteBuffer tarBuff(20);
+        tarBuff.writeString("0123456789");
+        EXPECT_EQ(false, srcBuff.readToByteBuffer(tarBuff, 11));
+    }
+
+    {
+        SCOPED_TRACE("// case 3. success");
+
+        ByteBuffer srcBuff("0123456789a");
+        ByteBuffer tarBuff(20);
+        EXPECT_EQ(true, srcBuff.readToByteBuffer(tarBuff, 5));
+        EXPECT_EQ(tarBuff.asString(), "01234");
+    }
 }

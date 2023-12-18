@@ -6,6 +6,7 @@
 #include <iomanip>
 #include <iostream>
 #include <locale>
+#include <span>
 #include <sstream>
 #include <vector>
 
@@ -222,6 +223,23 @@ inline std::string objName(const T &obj) noexcept
 {
     const size_t address = reinterpret_cast<size_t>(&obj);
     return "(0x" + to_hex_string(address) + "):" + typeid(obj).name();
+}
+
+/**
+ * @brief 
+ * 
+ * @tparam T 
+ * @param val 
+ * @return T 
+ */
+template <typename T>
+inline T swapEndian(const T &val)
+{
+    auto in = std::as_bytes(std::span(&val, 1));
+    T result;
+    auto out = std::as_writable_bytes(std::span(&result, 1));
+    std::copy(in.rbegin(), in.rend(), out.begin());
+    return result;
 }
 
 } // namespace psi::tools
