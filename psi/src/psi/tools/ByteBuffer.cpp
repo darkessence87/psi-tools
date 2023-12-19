@@ -42,11 +42,15 @@ ByteBuffer::ByteBuffer(uint8_t *arr, size_t sz)
 {
 }
 
-ByteBuffer::ByteBuffer(const std::string &data)
-    : m_bufferSz(data.size())
+ByteBuffer::ByteBuffer(const std::string &data, bool isHex)
+    : m_bufferSz(data.size() / (isHex ? 2 : 1))
     , m_buffer(new uint8_t[m_bufferSz]())
 {
-    writeString(data);
+    if (isHex) {
+        writeHexString(data);
+    } else {
+        writeString(data);
+    }
 }
 
 ByteBuffer::~ByteBuffer()
@@ -250,9 +254,9 @@ bool ByteBuffer::writeHexString(const std::string &data)
         return false;
     }
 
-    for (uint8_t i = 0; i < data.size(); i += 2) {
+    for (size_t i = 0; i < data.size(); i += 2) {
         const std::string temp = data.substr(i, 2);
-        uint8_t v = static_cast<uint8_t>(std::stoul(temp, nullptr, 16));
+        const uint8_t v = static_cast<uint8_t>(std::stoul(temp, nullptr, 16));
         m_buffer[m_writeIndex] = v;
         ++m_writeIndex;
     }

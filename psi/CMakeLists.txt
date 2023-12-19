@@ -12,6 +12,7 @@ set (SOURCES
     src/psi/tools/ByteBuffer.cpp
     src/psi/tools/Encryptor.cpp
     src/psi/tools/Tools.cpp
+    src/psi/tools/x25519.cpp
 )
 
 add_library(psi-tools ${SOURCES})

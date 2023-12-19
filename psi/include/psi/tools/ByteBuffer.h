@@ -44,8 +44,10 @@ public:
      * @brief Construct a new Byte Buffer object by string
      * 
      * @param data string
+     * @param isHex if true buffer interprets data as hex input
+     * default value: false
      */
-    ByteBuffer(const std::string &data);
+    ByteBuffer(const std::string &data, bool isHex = false);
 
     /**
      * @brief Destroy the Byte Buffer object. Frees memory.

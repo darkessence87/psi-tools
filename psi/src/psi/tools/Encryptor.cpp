@@ -1,5 +1,3 @@
-#include <chrono>
-
 #include "psi/tools/Encryptor.h"
 
 #ifdef PSI_LOGGER
@@ -18,9 +16,195 @@
 
 namespace psi::tools {
 
-const uint8_t Encryptor::CONST_BLOCK_LEN_BYTES = 16u;
-const uint8_t Encryptor::CONST_KEY_LEN_BYTES = 32u;
-const uint8_t Encryptor::CONST_ROUNDS_NUMBER = 14u;
+inline void doRoundKeyEncode(const Encryptor::SubKey &key, Encryptor::DataBlock16 &block, bool isFinal = false)
+{
+    Encryptor::subBytes(Encryptor::m_sBox, block);
+    Encryptor::shiftRows(block);
+    if (!isFinal) {
+        Encryptor::mixColumns(block);
+    }
+    Encryptor::applySubKey(key, block);
+}
+
+inline void doRoundKeyDecode(const Encryptor::SubKey &key, Encryptor::DataBlock16 &block, bool isFinal = false)
+{
+    Encryptor::invShiftRows(block);
+    Encryptor::subBytes(Encryptor::m_iBox, block);
+    Encryptor::applySubKey(key, block);
+    if (!isFinal) {
+        Encryptor::invMixColumns(block);
+    }
+}
+
+template <uint8_t Nk, uint8_t Nr>
+ByteBuffer Encryptor::encryptAes_impl(const ByteBuffer &inputData, const ByteBuffer &key)
+{
+    if (key.size() != Nk * 4u) {
+        return {};
+    }
+
+    inputData.reset();
+    key.reset();
+
+    const uint8_t extraBytes = inputData.size() % 16u;
+    ByteBuffer result(extraBytes == 0 ? inputData.size() : (inputData.size() + 16u - extraBytes + 1));
+
+    SubKey m_subKeys[Nr + 1u];
+    generateSubKeys_impl<Nk, Nr>(key.data(), m_subKeys);
+
+    const auto &m_inData = inputData.data();
+    auto m_outData = result.data();
+
+    const size_t cycles = inputData.size() / 16u;
+
+    // main cycles
+    for (size_t cycleN = 0; cycleN < cycles; ++cycleN) {
+        DataBlock16 block;
+        writeBlock(&m_inData[cycleN * 16u], 16u, block);
+        applySubKey(m_subKeys[0], block);
+        for (uint8_t round = 1; round < Nr; ++round) {
+            doRoundKeyEncode(m_subKeys[round], block);
+        }
+        doRoundKeyEncode(m_subKeys[Nr], block, true);
+        readBlock(block, &m_outData[cycleN * 16u], 16u);
+    }
+    // additional cycle
+    if (extraBytes) {
+        uint8_t lastChunk[16u] = {'\0'};
+        memcpy(lastChunk, &m_inData[inputData.size() - extraBytes], extraBytes);
+
+        DataBlock16 block;
+        writeBlock(lastChunk, 16u, block);
+        applySubKey(m_subKeys[0], block);
+        for (uint8_t round = 1; round < Nr; ++round) {
+            doRoundKeyEncode(m_subKeys[round], block);
+        }
+        doRoundKeyEncode(m_subKeys[Nr], block, true);
+        readBlock(block, &m_outData[cycles * 16u], 16u);
+        memset(&m_outData[(cycles + 1) * 16u], uint8_t(extraBytes), 1);
+    }
+
+    return result;
+}
+
+template <uint8_t Nk, uint8_t Nr>
+ByteBuffer Encryptor::decryptAes_impl(const ByteBuffer &inputData, const ByteBuffer &key)
+{
+    if (key.size() != Nk * 4u) {
+        return {};
+    }
+
+    inputData.reset();
+    key.reset();
+
+    // make data copy
+    const uint8_t lenOffset = inputData.size() % 16u;
+    const uint8_t extraBytes = lenOffset ? inputData.at(inputData.size() - 1) : 0;
+    const size_t resultLen = lenOffset ? inputData.size() - 1 - 16u + extraBytes : inputData.size();
+    ByteBuffer result(resultLen);
+
+    SubKey m_subKeys[Nr + 1u];
+    generateSubKeys_impl<Nk, Nr>(key.data(), m_subKeys);
+
+    const auto &m_inData = inputData.data();
+    auto m_outData = result.data();
+
+    const size_t cycles = resultLen / 16u;
+
+    // main cycles
+    for (size_t cycleN = 0; cycleN < cycles; ++cycleN) {
+        DataBlock16 block;
+        writeBlock(&m_inData[cycleN * 16u], 16u, block);
+        applySubKey(m_subKeys[Nr], block);
+        for (uint8_t round = Nr - 1; round > 0; --round) {
+            doRoundKeyDecode(m_subKeys[round], block);
+        }
+        doRoundKeyDecode(m_subKeys[0], block, true);
+        readBlock(block, &m_outData[cycleN * 16u], 16u);
+    }
+    // additional cycle
+    if (extraBytes) {
+        uint8_t lastChunk[16u] = {'\0'};
+        memcpy(lastChunk, &m_inData[inputData.size() - 1 - 16u], 16u);
+
+        DataBlock16 block;
+        writeBlock(lastChunk, 16u, block);
+        applySubKey(m_subKeys[Nr], block);
+        for (uint8_t round = Nr - 1; round > 0; --round) {
+            doRoundKeyDecode(m_subKeys[round], block);
+        }
+        doRoundKeyDecode(m_subKeys[0], block, true);
+        readBlock(block, &m_outData[cycles * 16u], extraBytes);
+    }
+
+    return result;
+}
+
+template <uint8_t Nk, uint8_t Nr>
+void Encryptor::generateSubKeys_impl(uint8_t key[Nk * 4u], SubKey subKeys[Nr + 1u])
+{
+    // (Nr + 1) * 4 rows, 4 cols
+    constexpr uint8_t SUB_WORDS = (Nr + 1) * 4u;
+    uint8_t w[SUB_WORDS][4u];
+    memcpy(&w[0][0], key, Nk * 4u);
+
+    uint8_t i = Nk;
+    uint8_t temp[4u];
+    while (i < SUB_WORDS) {
+        memcpy(temp, w[i - 1u], 4u);
+        if (i % Nk == 0u) {
+            rotWord(temp);
+            subWord(temp);
+            temp[0] ^= m_rCon[i / Nk - 1u];
+        } else if constexpr (Nk > 6u) {
+            if (i % Nk == 4u) {
+                subWord(temp);
+            }
+        }
+        for (uint8_t k = 0; k < 4u; ++k) {
+            w[i][k] = w[i - Nk][k] ^ temp[k];
+        }
+        ++i;
+    }
+
+    for (uint8_t k = 0; k < Nr + 1u; ++k) {
+        memcpy(&subKeys[k], &w[k * 4u], 16u);
+    }
+}
+
+inline uint8_t mul2(uint8_t v)
+{
+    return (v << 1) ^ (0x1b & uint8_t(int8_t(v) >> 7));
+}
+
+inline uint8_t mul3(uint8_t a)
+{
+    return mul2(a) ^ a;
+}
+
+inline uint8_t mul9(uint8_t a)
+{
+    return mul2(mul2(mul2(a))) ^ a;
+}
+
+inline uint8_t mul11(uint8_t a)
+{
+    const auto b = mul2(a);
+    return mul2(mul2(b)) ^ b ^ a;
+}
+
+inline uint8_t mul13(uint8_t a)
+{
+    const auto c = mul2(mul2(a));
+    return mul2(c) ^ c ^ a;
+}
+
+inline uint8_t mul14(uint8_t a)
+{
+    const auto b = mul2(a);
+    const auto c = mul2(b);
+    return mul2(c) ^ c ^ b;
+}
 
 const uint8_t Encryptor::m_sBox[256u] = {
     //0   1     2     3     4     5     6     7     8     9     a     b     c     d     e     f
@@ -268,40 +452,6 @@ void Encryptor::invShiftRows(Encryptor::DataBlock16 &block)
     block[3][3] = t;
 }
 
-inline uint8_t mul2(uint8_t v)
-{
-    return (v << 1) ^ (0x1b & uint8_t(int8_t(v) >> 7));
-}
-
-inline uint8_t mul3(uint8_t a)
-{
-    return mul2(a) ^ a;
-}
-
-inline uint8_t mul9(uint8_t a)
-{
-    return mul2(mul2(mul2(a))) ^ a;
-}
-
-inline uint8_t mul11(uint8_t a)
-{
-    const auto b = mul2(a);
-    return mul2(mul2(b)) ^ b ^ a;
-}
-
-inline uint8_t mul13(uint8_t a)
-{
-    const auto c = mul2(mul2(a));
-    return mul2(c) ^ c ^ a;
-}
-
-inline uint8_t mul14(uint8_t a)
-{
-    const auto b = mul2(a);
-    const auto c = mul2(b);
-    return mul2(c) ^ c ^ b;
-}
-
 void Encryptor::mixColumns(Encryptor::DataBlock16 &block)
 {
     for (uint8_t col = 0; col < 4; ++col) {
@@ -391,133 +541,19 @@ void Encryptor::readBlock(const Encryptor::DataBlock16 &block, uint8_t *data, si
     }
 }
 
-void Encryptor::doRoundKeyEncode(const SubKey256 &key, DataBlock16 &block, bool isFinal)
+ByteBuffer Encryptor::encryptAes128(const ByteBuffer &inputData, const ByteBuffer &key)
 {
-    subBytes(m_sBox, block);
-    shiftRows(block);
-    if (!isFinal) {
-        mixColumns(block);
-    }
-    applySubKey(key, block);
+    return encryptAes_impl<4, 10>(inputData, key);
 }
 
 ByteBuffer Encryptor::encryptAes256(const ByteBuffer &inputData, const ByteBuffer &key)
 {
-    if (key.size() != 32u) {
-        return {};
-    }
-
-    inputData.reset();
-    key.reset();
-
-    const uint8_t extraBytes = inputData.size() % 16u;
-    ByteBuffer result(extraBytes == 0 ? inputData.size() : (inputData.size() + 16u - extraBytes + 1));
-
-    SubKeys256 m_subKeys;
-    generateSubKeys(key.data(), m_subKeys);
-
-    const auto &m_inData = inputData.data();
-    auto m_outData = result.data();
-
-    const size_t cycles = inputData.size() / 16u;
-
-    // main cycles
-    for (size_t cycleN = 0; cycleN < cycles; ++cycleN) {
-        DataBlock16 block;
-        writeBlock(&m_inData[cycleN * 16u], 16u, block);
-        applySubKey(m_subKeys[0], block);
-        for (uint8_t round = 1; round < CONST_ROUNDS_NUMBER; ++round) {
-            doRoundKeyEncode(m_subKeys[round], block);
-        }
-        doRoundKeyEncode(m_subKeys[CONST_ROUNDS_NUMBER], block, true);
-        readBlock(block, &m_outData[cycleN * 16u], 16u);
-    }
-    // additional cycle
-    if (extraBytes) {
-        uint8_t lastChunk[16u] = {'\0'};
-        memcpy(lastChunk, &m_inData[inputData.size() - extraBytes], extraBytes);
-
-        DataBlock16 block;
-        writeBlock(lastChunk, 16u, block);
-        applySubKey(m_subKeys[0], block);
-        for (uint8_t round = 1; round < CONST_ROUNDS_NUMBER; ++round) {
-            doRoundKeyEncode(m_subKeys[round], block);
-        }
-        doRoundKeyEncode(m_subKeys[CONST_ROUNDS_NUMBER], block, true);
-        readBlock(block, &m_outData[cycles * 16u], 16u);
-        memset(&m_outData[(cycles + 1) * 16u], uint8_t(extraBytes), 1);
-    }
-
-    return result;
-}
-
-void Encryptor::doRoundKeyDecode(const SubKey256 &key, DataBlock16 &block, bool isFinal)
-{
-    invShiftRows(block);
-    subBytes(m_iBox, block);
-    applySubKey(key, block);
-    if (!isFinal) {
-        invMixColumns(block);
-    }
+    return encryptAes_impl<8, 14>(inputData, key);
 }
 
 ByteBuffer Encryptor::decryptAes256(const ByteBuffer &inputData, const ByteBuffer &key)
 {
-    if (key.size() != 32u) {
-        return {};
-    }
-
-    inputData.reset();
-    key.reset();
-
-    // make data copy
-    const uint8_t lenOffset = inputData.size() % 16u;
-    const uint8_t extraBytes = lenOffset ? inputData.at(inputData.size() - 1) : 0;
-    const size_t resultLen = lenOffset ? inputData.size() - 1 - 16u + extraBytes : inputData.size();
-    ByteBuffer result(resultLen);
-
-    SubKeys256 m_subKeys;
-    generateSubKeys(key.data(), m_subKeys);
-
-    const auto &m_inData = inputData.data();
-    auto m_outData = result.data();
-
-    const size_t cycles = resultLen / 16u;
-
-    // main cycles
-    for (size_t cycleN = 0; cycleN < cycles; ++cycleN) {
-        DataBlock16 block;
-        writeBlock(&m_inData[cycleN * 16u], 16u, block);
-        applySubKey(m_subKeys[CONST_ROUNDS_NUMBER], block);
-        for (uint8_t round = CONST_ROUNDS_NUMBER - 1; round > 0; --round) {
-            doRoundKeyDecode(m_subKeys[round], block);
-        }
-        doRoundKeyDecode(m_subKeys[0], block, true);
-        readBlock(block, &m_outData[cycleN * 16u], 16u);
-    }
-    // additional cycle
-    if (extraBytes) {
-        uint8_t lastChunk[16u] = {'\0'};
-        memcpy(lastChunk, &m_inData[inputData.size() - 1 - 16u], 16u);
-
-        DataBlock16 block;
-        writeBlock(lastChunk, 16u, block);
-        applySubKey(m_subKeys[CONST_ROUNDS_NUMBER], block);
-        for (uint8_t round = CONST_ROUNDS_NUMBER - 1; round > 0; --round) {
-            doRoundKeyDecode(m_subKeys[round], block);
-        }
-        doRoundKeyDecode(m_subKeys[0], block, true);
-        readBlock(block, &m_outData[cycles * 16u], extraBytes);
-    }
-
-    return result;
-}
-
-void Encryptor::scheduleKey(uint8_t word[4], const uint8_t rConIndex)
-{
-    rotWord(word);
-    subWord(word);
-    word[0] ^= m_rCon[rConIndex];
+    return decryptAes_impl<8, 14>(inputData, key);
 }
 
 void Encryptor::rotWord(uint8_t word[4])
@@ -537,61 +573,12 @@ void Encryptor::subWord(uint8_t word[4])
     word[3] = m_sBox[word[3]];
 };
 
-void Encryptor::generateSubKeys(uint8_t key[32], SubKeys256 &subKeys)
+uint32_t &Encryptor::rotWord(uint32_t &word)
 {
-    for (uint8_t i = 0; i < 2; ++i) {
-        for (uint8_t j = 0; j < 16; ++j) {
-            subKeys[i][j] = key[i * 16 + j];
-        }
-    }
-
-    // rounds
-    uint8_t rConIteration = 0u;
-    uint8_t currIndex = 0;
-
-    const uint8_t maxLen = CONST_ROUNDS_NUMBER * 16u;
-
-    // setup last 4 bytes
-    uint8_t prevWord[4u];
-    memcpy(prevWord, &subKeys[1][12], 4u);
-
-    while (currIndex < maxLen) {
-        // pick and modify previous word
-        scheduleKey(prevWord, rConIteration);
-        ++rConIteration;
-
-        const auto i = currIndex / 16u;
-        const auto j = currIndex % 16u;
-
-        for (uint8_t idx = 0; idx <= 1; ++idx) {
-            const auto ii = i + 2 + idx;
-            if (ii > CONST_ROUNDS_NUMBER) {
-                break;
-            }
-
-            if (idx > 0) {
-                subWord(prevWord);
-            }
-
-            // new 4 bytes (total: 4)
-            for (uint8_t k = 0; k < 4; ++k) {
-                const auto jj = j + k;
-                subKeys[ii][jj] = subKeys[i + idx][jj] ^ prevWord[k];
-                prevWord[k] = subKeys[ii][jj];
-            }
-
-            // new 12 bytes (total: 16)
-            for (uint8_t k = 1; k < 4; ++k) {
-                for (uint8_t z = 0; z < 4; ++z) {
-                    const auto jj = j + k * 4 + z;
-                    subKeys[ii][jj] = subKeys[i + idx][jj] ^ prevWord[z];
-                    prevWord[z] = subKeys[ii][jj];
-                }
-            }
-        }
-
-        currIndex += 32;
-    }
+    uint8_t t = word >> 24;
+    word <<= 8;
+    word |= t;
+    return word;
 }
 
 ByteBuffer Encryptor::generateSessionKey()
@@ -635,8 +622,6 @@ ByteBuffer Encryptor::generateSessionKey()
     sessionKey.write(rande);
     sessionKey.write(randf);
     sessionKey.write(rand0);
-
-    // LOG_TRACE_STATIC("sessionKey: " << sessionKey.asHexString());
 
     return sessionKey;
 }

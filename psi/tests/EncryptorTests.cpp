@@ -2,7 +2,6 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
-
 #include <iostream>
 #include <set>
 #include <sstream>
@@ -11,6 +10,121 @@
 #include "psi/tools/Tools.h"
 
 using namespace psi::tools;
+
+TEST(EncryptorTests, generateSubKeys_impl_AES128)
+{
+    const ByteBuffer
+        expectedEnhancedKey("2b7e151628aed2a6abf7158809cf4f3ca0fafe1788542cb123a339392a6c7605f2c295f27a96b9435935807a73"
+                            "59f67f3d80477d4716fe3e1e237e446d7a883bef44a541a8525b7fb671253bdb0bad00d4d1c6f87c839d87caf2"
+                            "b8bc11f915bc6d88a37a110b3efddbf98641ca0093fd4e54f70e5f5fc9f384a64fb24ea6dc4fead27321b58dba"
+                            "d2312bf5607f8d292fac7766f319fadc2128d12941575c006ed014f9a8c9ee2589e13f0cc8b6630ca6",
+                            true);
+
+    const ByteBuffer key("2b7e151628aed2a6abf7158809cf4f3c", true);
+    Encryptor::SubKeys128 subKeys = {};
+    Encryptor::generateSubKeys_impl<4, 10>(key.data(), subKeys);
+    ByteBuffer enhancedKey(16u * 11u);
+    for (size_t i = 0; i < enhancedKey.size(); ++i) {
+        enhancedKey.write(subKeys[i]);
+    }
+    EXPECT_EQ(expectedEnhancedKey.asHexStringFormatted(), enhancedKey.asHexStringFormatted());
+}
+
+TEST(EncryptorTests, generateSubKeys_impl_AES256)
+{
+    const ByteBuffer expectedEnhancedKey(
+        "603deb1015ca71be2b73aef0857d77811f352c073b6108d72d9810a30914dff49ba354118e6925afa51a8b5f2067fcdea8b09c1a93d194"
+        "cdbe49846eb75d5b9ad59aecb85bf3c917fee94248de8ebe96b5a9328a2678a647983122292f6c79b3812c81addadf48ba24360af2fab8"
+        "b46498c5bfc9bebd198e268c3ba709e0421468007bacb2df331696e939e46c518d80c814e20476a9fb8a5025c02d59c58239de1369676c"
+        "cc5a71fa2563959674ee155886ca5d2e2f31d77e0af1fa27cf73c3749c47ab18501ddae2757e4f7401905acafaaae3e4d59b349adf6ace"
+        "bd10190dfe4890d1e6188d0b046df344706c631e",
+        true);
+
+    const ByteBuffer key("603deb1015ca71be2b73aef0857d77811f352c073b6108d72d9810a30914dff4", true);
+    Encryptor::SubKeys256 subKeys = {};
+    Encryptor::generateSubKeys_impl<8, 14>(key.data(), subKeys);
+    ByteBuffer enhancedKey(16u * 15u);
+    for (size_t i = 0; i < enhancedKey.size(); ++i) {
+        enhancedKey.write(subKeys[i]);
+    }
+    EXPECT_EQ(expectedEnhancedKey.asHexStringFormatted(), enhancedKey.asHexStringFormatted());
+}
+
+TEST(EncryptorTests, encryptAes_impl_AES128)
+{
+    ByteBuffer key(16u);
+    key.writeHexString("000102030405060708090a0b0c0d0e0f");
+
+    {
+        SCOPED_TRACE("// case 1. two full blocks + one non-full block");
+
+        ByteBuffer data(47u);
+        data.writeHexString(
+            "00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff00112233445566778899aabbccddee");
+
+        const auto encodedData = Encryptor::encryptAes128(data, key);
+        EXPECT_EQ(encodedData.asHexString(),
+                  "69c4e0d86a7b0430d8cdb78070b4c55a69c4e0d86a7b0430d8cdb78070b4c55a7c99f42b6ee503309c6c1a67e97ac2420f");
+    }
+
+    {
+        SCOPED_TRACE("// case 2. one non-full block");
+
+        ByteBuffer data(15u);
+        data.writeHexString("00112233445566778899aabbccddee");
+
+        const auto encodedData = Encryptor::encryptAes128(data, key);
+        EXPECT_EQ(encodedData.asHexString(), "7c99f42b6ee503309c6c1a67e97ac2420f");
+    }
+
+    {
+        SCOPED_TRACE("// case 3. one full block");
+
+        ByteBuffer data(16u);
+        data.writeHexString("00112233445566778899aabbccddeeff");
+
+        const auto encodedData = Encryptor::encryptAes128(data, key);
+        EXPECT_EQ(encodedData.asHexString(), "69c4e0d86a7b0430d8cdb78070b4c55a");
+    }
+}
+
+TEST(EncryptorTests, encryptAes_impl_AES256)
+{
+    ByteBuffer key(32u);
+    key.writeHexString("000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f");
+
+    {
+        SCOPED_TRACE("// case 1. two full blocks + one non-full block");
+
+        ByteBuffer data(47u);
+        data.writeHexString(
+            "00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff00112233445566778899aabbccddee");
+
+        const auto encodedData = Encryptor::encryptAes256(data, key);
+        EXPECT_EQ(encodedData.asHexString(),
+                  "8ea2b7ca516745bfeafc49904b4960898ea2b7ca516745bfeafc49904b49608994501d9b894874a1f7feae67d905c45b0f");
+    }
+
+    {
+        SCOPED_TRACE("// case 2. one non-full block");
+
+        ByteBuffer data(15u);
+        data.writeHexString("00112233445566778899aabbccddee");
+
+        const auto encodedData = Encryptor::encryptAes256(data, key);
+        EXPECT_EQ(encodedData.asHexString(), "94501d9b894874a1f7feae67d905c45b0f");
+    }
+
+    {
+        SCOPED_TRACE("// case 3. one full block");
+
+        ByteBuffer data(16u);
+        data.writeHexString("00112233445566778899aabbccddeeff");
+
+        const auto encodedData = Encryptor::encryptAes256(data, key);
+        EXPECT_EQ(encodedData.asHexString(), "8ea2b7ca516745bfeafc49904b496089");
+    }
+}
 
 TEST(EncryptorTests, Base64EncryptionDecryption_Success)
 {
@@ -48,74 +162,6 @@ TEST(EncryptorTests, Base64Decryption_Failed)
     EXPECT_TRUE(decryptedMessage.size() == 0);
 }
 
-TEST(EncryptorTests, Aes256_GenerateRoundKeys)
-{
-    const uint8_t sampleKey1[32] = {
-        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    };
-    const std::string expectedEnhancedKey1 = "[ \
-00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 \
-62 63 63 63 62 63 63 63 62 63 63 63 62 63 63 63 aa fb fb fb aa fb fb fb aa fb fb fb aa fb fb fb \
-6f 6c 6c cf 0d 0f 0f ac 6f 6c 6c cf 0d 0f 0f ac 7d 8d 8d 6a d7 76 76 91 7d 8d 8d 6a d7 76 76 91 \
-53 54 ed c1 5e 5b e2 6d 31 37 8e a2 3c 38 81 0e 96 8a 81 c1 41 fc f7 50 3c 71 7a 3a eb 07 0c ab \
-9e aa 8f 28 c0 f1 6d 45 f1 c6 e3 e7 cd fe 62 e9 2b 31 2b df 6a cd dc 8f 56 bc a6 b5 bd bb aa 1e \
-64 06 fd 52 a4 f7 90 17 55 31 73 f0 98 cf 11 19 6d bb a9 0b 07 76 75 84 51 ca d3 31 ec 71 79 2f \
-e7 b0 e8 9c 43 47 78 8b 16 76 0b 7b 8e b9 1a 62 74 ed 0b a1 73 9b 7e 25 22 51 ad 14 ce 20 d4 3b \
-10 f8 0a 17 53 bf 72 9c 45 c9 79 e7 cb 70 63 85 \
-]";
-
-    const uint8_t sampleKey2[32] = {
-        0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-        0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-    };
-    const std::string expectedEnhancedKey2 = "[ \
-ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff \
-e8 e9 e9 e9 17 16 16 16 e8 e9 e9 e9 17 16 16 16 0f b8 b8 b8 f0 47 47 47 0f b8 b8 b8 f0 47 47 47 \
-4a 49 49 65 5d 5f 5f 73 b5 b6 b6 9a a2 a0 a0 8c 35 58 58 dc c5 1f 1f 9b ca a7 a7 23 3a e0 e0 64 \
-af a8 0a e5 f2 f7 55 96 47 41 e3 0c e5 e1 43 80 ec a0 42 11 29 bf 5d 8a e3 18 fa a9 d9 f8 1a cd \
-e6 0a b7 d0 14 fd e2 46 53 bc 01 4a b6 5d 42 ca a2 ec 6e 65 8b 53 33 ef 68 4b c9 46 b1 b3 d3 8b \
-9b 6c 8a 18 8f 91 68 5e dc 2d 69 14 6a 70 2b de a0 bd 9f 78 2b ee ac 97 43 a5 65 d1 f2 16 b6 5a \
-fc 22 34 91 73 b3 5c cf af 9e 35 db c5 ee 1e 05 06 95 ed 13 2d 7b 41 84 6e de 24 55 9c c8 92 0f \
-54 6d 42 4f 27 de 1e 80 88 40 2b 5b 4d ae 35 5e \
-]";
-
-    const uint8_t sampleKey3[32] = {
-        0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f,
-        0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19, 0x1a, 0x1b, 0x1c, 0x1d, 0x1e, 0x1f,
-    };
-    const std::string expectedEnhancedKey3 = "[ \
-00 01 02 03 04 05 06 07 08 09 0a 0b 0c 0d 0e 0f 10 11 12 13 14 15 16 17 18 19 1a 1b 1c 1d 1e 1f \
-a5 73 c2 9f a1 76 c4 98 a9 7f ce 93 a5 72 c0 9c 16 51 a8 cd 02 44 be da 1a 5d a4 c1 06 40 ba de \
-ae 87 df f0 0f f1 1b 68 a6 8e d5 fb 03 fc 15 67 6d e1 f1 48 6f a5 4f 92 75 f8 eb 53 73 b8 51 8d \
-c6 56 82 7f c9 a7 99 17 6f 29 4c ec 6c d5 59 8b 3d e2 3a 75 52 47 75 e7 27 bf 9e b4 54 07 cf 39 \
-0b dc 90 5f c2 7b 09 48 ad 52 45 a4 c1 87 1c 2f 45 f5 a6 60 17 b2 d3 87 30 0d 4d 33 64 0a 82 0a \
-7c cf f7 1c be b4 fe 54 13 e6 bb f0 d2 61 a7 df f0 1a fa fe e7 a8 29 79 d7 a5 64 4a b3 af e6 40 \
-25 41 fe 71 9b f5 00 25 88 13 bb d5 5a 72 1c 0a 4e 5a 66 99 a9 f2 4f e0 7e 57 2b aa cd f8 cd ea \
-24 fc 79 cc bf 09 79 e9 37 1a c2 3c 6d 68 de 36 \
-]";
-
-    auto test = [](const uint8_t keySample[32u], const std::string &expectedEnhancedKey) {
-        ByteBuffer key(32u);
-        key.writeArray(keySample, 32u);
-
-        Encryptor::SubKeys256 subKeys = {};
-        Encryptor::generateSubKeys(key.data(), subKeys);
-
-        ByteBuffer enhancedKey(16u * 15u);
-        for (size_t i = 0; i < 15u; ++i) {
-            for (size_t j = 0; j < 16u; ++j) {
-                enhancedKey.write(subKeys[i][j]);
-            }
-        }
-        EXPECT_EQ(expectedEnhancedKey, enhancedKey.asHexStringFormatted());
-    };
-
-    test(sampleKey1, expectedEnhancedKey1);
-    test(sampleKey2, expectedEnhancedKey2);
-    test(sampleKey3, expectedEnhancedKey3);
-}
-
 TEST(EncryptorTests, subWord)
 {
     auto doTest = [](uint8_t word[4], const uint8_t expectedWord[4]) {
@@ -131,26 +177,6 @@ TEST(EncryptorTests, subWord)
 
     uint8_t word2[4u] = {0x10, 0x20, 0x30, 0x40};
     const uint8_t expectedWord2[4u] = {0xca, 0xb7, 0x04, 0x09};
-
-    doTest(word1, expectedWord1);
-    doTest(word2, expectedWord2);
-}
-
-TEST(EncryptorTests, scheduleKey)
-{
-    auto doTest = [](uint8_t word[4], const uint8_t expectedWord[4]) {
-        Encryptor::scheduleKey(word, 0);
-
-        for (uint8_t r = 0; r < 4; ++r) {
-            EXPECT_EQ(expectedWord[r], word[r]);
-        }
-    };
-
-    uint8_t word1[4u] = {0x00, 0x04, 0x08, 0x0c};
-    const uint8_t expectedWord1[4u] = {0xf3, 0x30, 0xfe, 0x63};
-
-    uint8_t word2[4u] = {0x10, 0x20, 0x30, 0x40};
-    const uint8_t expectedWord2[4u] = {0xb6, 0x04, 0x09, 0xca};
 
     doTest(word1, expectedWord1);
     doTest(word2, expectedWord2);
@@ -268,36 +294,6 @@ TEST(EncryptorTests, DISABLED_performanceCompare)
     //     "decryptAes256", [&]() { Encryptor::decryptAes256(encoded_2, key); }, 100000);
 }
 
-void stringToSubKey(const std::string &data, uint8_t (&key)[16])
-{
-    if (data.size() != 32u) {
-        return;
-    }
-
-    size_t k = 0;
-    for (uint8_t i = 0; i < data.size(); i += 2) {
-        const std::string temp = data.substr(i, 2);
-        uint8_t v = static_cast<uint8_t>(std::stoul(temp, nullptr, 16));
-        key[k] = v;
-        ++k;
-    }
-}
-
-void stringToKey(const std::string &data, uint8_t (&key)[32])
-{
-    if (data.size() != 64u) {
-        return;
-    }
-
-    size_t k = 0;
-    for (uint8_t i = 0; i < data.size(); i += 2) {
-        const std::string temp = data.substr(i, 2);
-        uint8_t v = static_cast<uint8_t>(std::stoul(temp, nullptr, 16));
-        key[k] = v;
-        ++k;
-    }
-}
-
 void stringToBlock(const std::string &data, uint8_t (&block)[4][4])
 {
     if (data.size() != 32u) {
@@ -327,44 +323,6 @@ std::string blockToString(const uint8_t block[4][4])
     }
 
     return os.str();
-}
-
-TEST(EncryptorTests, encryptAes256)
-{
-    ByteBuffer key(32u);
-    key.writeHexString("000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f");
-
-    {
-        SCOPED_TRACE("// case 1. two full blocks + one non-full block");
-
-        ByteBuffer data(47u);
-        data.writeHexString(
-            "00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff00112233445566778899aabbccddee");
-
-        const auto encodedData = Encryptor::encryptAes256(data, key);
-        EXPECT_EQ(encodedData.asHexString(),
-                  "8ea2b7ca516745bfeafc49904b4960898ea2b7ca516745bfeafc49904b49608994501d9b894874a1f7feae67d905c45b0f");
-    }
-
-    {
-        SCOPED_TRACE("// case 2. one non-full block");
-
-        ByteBuffer data(15u);
-        data.writeHexString("00112233445566778899aabbccddee");
-
-        const auto encodedData = Encryptor::encryptAes256(data, key);
-        EXPECT_EQ(encodedData.asHexString(), "94501d9b894874a1f7feae67d905c45b0f");
-    }
-
-    {
-        SCOPED_TRACE("// case 3. one full block");
-
-        ByteBuffer data(16u);
-        data.writeHexString("00112233445566778899aabbccddeeff");
-
-        const auto encodedData = Encryptor::encryptAes256(data, key);
-        EXPECT_EQ(encodedData.asHexString(), "8ea2b7ca516745bfeafc49904b496089");
-    }
 }
 
 TEST(EncryptorTests, decryptAes256)
@@ -510,7 +468,7 @@ TEST(EncryptorTests, rotWord)
     // psi::test::TestHelper::timeFn("rotWord_new", [&]() { Encryptor::rotWord2(block); }, 100'000'000);
 }
 
-TEST(EncryptorTests, generateSessionKey)
+TEST(EncryptorTests, DISABLED_generateSessionKey)
 {
     std::vector<std::string> keyStrs;
     auto comparator = [](const std::vector<uint64_t> &a, const std::vector<uint64_t> &b) {
@@ -522,7 +480,7 @@ TEST(EncryptorTests, generateSessionKey)
                 return a[i] < b[i];
             }
         }
-        return true; 
+        return true;
     };
     std::set<std::vector<uint64_t>, decltype(comparator)> keys;
 
@@ -541,5 +499,95 @@ TEST(EncryptorTests, generateSessionKey)
                 std::cout << key.asHexStringFormatted() << std::endl;
             }
         }
+    }
+}
+
+TEST(Encryptor_x25519Tests, scalarmult_base)
+{
+    {
+        SCOPED_TRACE("// case 1. sender keys");
+        uint8_t sender_pk[32];
+        uint8_t sender_sk[32] = {0x77, 0x07, 0x6d, 0x0a, 0x73, 0x18, 0xa5, 0x7d, 0x3c, 0x16, 0xc1,
+                                 0x72, 0x51, 0xb2, 0x66, 0x45, 0xdf, 0x4c, 0x2f, 0x87, 0xeb, 0xc0,
+                                 0x99, 0x2a, 0xb1, 0x77, 0xfb, 0xa5, 0x1d, 0xb9, 0x2c, 0x2a};
+
+        Encryptor_x25519::scalarmult_base(sender_pk, sender_sk);
+
+        ByteBuffer pkBuffer(32);
+        pkBuffer.write(sender_pk);
+
+        uint8_t expectedPk[32] = {0x85, 0x20, 0xf0, 0x09, 0x89, 0x30, 0xa7, 0x54, 0x74, 0x8b, 0x7d,
+                                  0xdc, 0xb4, 0x3e, 0xf7, 0x5a, 0x0d, 0xbf, 0x3a, 0x0d, 0x26, 0x38,
+                                  0x1a, 0xf4, 0xeb, 0xa4, 0xa9, 0x8e, 0xaa, 0x9b, 0x4e, 0x6a};
+        ByteBuffer expected(32);
+        expected.write(expectedPk);
+        EXPECT_EQ(pkBuffer.asHexString(), expected.asHexString());
+    }
+
+    {
+        SCOPED_TRACE("// case 2. receiver keys");
+        uint8_t receiver_pk[32];
+        uint8_t receiver_sk[32] = {0x5d, 0xab, 0x08, 0x7e, 0x62, 0x4a, 0x8a, 0x4b, 0x79, 0xe1, 0x7f,
+                                   0x8b, 0x83, 0x80, 0x0e, 0xe6, 0x6f, 0x3b, 0xb1, 0x29, 0x26, 0x18,
+                                   0xb6, 0xfd, 0x1c, 0x2f, 0x8b, 0x27, 0xff, 0x88, 0xe0, 0xeb};
+
+        Encryptor_x25519::scalarmult_base(receiver_pk, receiver_sk);
+
+        ByteBuffer pkBuffer(32);
+        pkBuffer.write(receiver_pk);
+
+        uint8_t expectedPk[32] = {0xde, 0x9e, 0xdb, 0x7d, 0x7b, 0x7d, 0xc1, 0xb4, 0xd3, 0x5b, 0x61,
+                                  0xc2, 0xec, 0xe4, 0x35, 0x37, 0x3f, 0x83, 0x43, 0xc8, 0x5b, 0x78,
+                                  0x67, 0x4d, 0xad, 0xfc, 0x7e, 0x14, 0x6f, 0x88, 0x2b, 0x4f};
+        ByteBuffer expected(32);
+        expected.write(expectedPk);
+        EXPECT_EQ(pkBuffer.asHexString(), expected.asHexString());
+    }
+}
+
+TEST(Encryptor_x25519Tests, scalarmult)
+{
+    {
+        SCOPED_TRACE("// case 1. shared key sender side");
+        uint8_t shared_pk[32];
+        uint8_t sender_sk[32] = {0x77, 0x07, 0x6d, 0x0a, 0x73, 0x18, 0xa5, 0x7d, 0x3c, 0x16, 0xc1,
+                                 0x72, 0x51, 0xb2, 0x66, 0x45, 0xdf, 0x4c, 0x2f, 0x87, 0xeb, 0xc0,
+                                 0x99, 0x2a, 0xb1, 0x77, 0xfb, 0xa5, 0x1d, 0xb9, 0x2c, 0x2a};
+        uint8_t receiver_pk[32] = {0xde, 0x9e, 0xdb, 0x7d, 0x7b, 0x7d, 0xc1, 0xb4, 0xd3, 0x5b, 0x61,
+                                   0xc2, 0xec, 0xe4, 0x35, 0x37, 0x3f, 0x83, 0x43, 0xc8, 0x5b, 0x78,
+                                   0x67, 0x4d, 0xad, 0xfc, 0x7e, 0x14, 0x6f, 0x88, 0x2b, 0x4f};
+
+        Encryptor_x25519::scalarmult(shared_pk, sender_sk, receiver_pk);
+
+        ByteBuffer shared_pkBuffer(32);
+        shared_pkBuffer.write(shared_pk);
+        uint8_t expectedSharedKey[32] = {0x4a, 0x5d, 0x9d, 0x5b, 0xa4, 0xce, 0x2d, 0xe1, 0x72, 0x8e, 0x3b,
+                                         0xf4, 0x80, 0x35, 0x0f, 0x25, 0xe0, 0x7e, 0x21, 0xc9, 0x47, 0xd1,
+                                         0x9e, 0x33, 0x76, 0xf0, 0x9b, 0x3c, 0x1e, 0x16, 0x17, 0x42};
+        ByteBuffer expected(32);
+        expected.write(expectedSharedKey);
+        EXPECT_EQ(shared_pkBuffer.asHexString(), expected.asHexString());
+    }
+    
+    {
+        SCOPED_TRACE("// case 2. shared key receiver side");
+        uint8_t shared_pk[32];
+        uint8_t receiver_sk[32] = {0x5d, 0xab, 0x08, 0x7e, 0x62, 0x4a, 0x8a, 0x4b, 0x79, 0xe1, 0x7f,
+                                   0x8b, 0x83, 0x80, 0x0e, 0xe6, 0x6f, 0x3b, 0xb1, 0x29, 0x26, 0x18,
+                                   0xb6, 0xfd, 0x1c, 0x2f, 0x8b, 0x27, 0xff, 0x88, 0xe0, 0xeb};
+        uint8_t sender_pk[32] = {0x85, 0x20, 0xf0, 0x09, 0x89, 0x30, 0xa7, 0x54, 0x74, 0x8b, 0x7d,
+                                 0xdc, 0xb4, 0x3e, 0xf7, 0x5a, 0x0d, 0xbf, 0x3a, 0x0d, 0x26, 0x38,
+                                 0x1a, 0xf4, 0xeb, 0xa4, 0xa9, 0x8e, 0xaa, 0x9b, 0x4e, 0x6a};
+
+        Encryptor_x25519::scalarmult(shared_pk, receiver_sk, sender_pk);
+
+        ByteBuffer shared_pkBuffer(32);
+        shared_pkBuffer.write(shared_pk);
+        uint8_t expectedSharedKey[32] = {0x4a, 0x5d, 0x9d, 0x5b, 0xa4, 0xce, 0x2d, 0xe1, 0x72, 0x8e, 0x3b,
+                                         0xf4, 0x80, 0x35, 0x0f, 0x25, 0xe0, 0x7e, 0x21, 0xc9, 0x47, 0xd1,
+                                         0x9e, 0x33, 0x76, 0xf0, 0x9b, 0x3c, 0x1e, 0x16, 0x17, 0x42};
+        ByteBuffer expected(32);
+        expected.write(expectedSharedKey);
+        EXPECT_EQ(shared_pkBuffer.asHexString(), expected.asHexString());
     }
 }

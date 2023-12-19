@@ -83,6 +83,9 @@ TEST(ByteBufferTests, ctor_string)
 {
     ByteBuffer data("test");
     EXPECT_EQ(data.asString(), "test");
+
+    ByteBuffer hexData("abcdef0123456789", true);
+    EXPECT_EQ(hexData.asHexString(), "abcdef0123456789");
 }
 
 TEST(ByteBufferTests, dtor)
