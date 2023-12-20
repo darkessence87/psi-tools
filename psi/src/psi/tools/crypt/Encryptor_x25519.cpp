@@ -1,6 +1,8 @@
+#include "Encryptor_x25519.h"
+
 #include "psi/tools/Encryptor.h"
 
-namespace psi::tools {
+namespace psi::tools::crypt {
 
 static const uint8_t _9[32] = {9};
 const Encryptor_x25519::field_elem Encryptor_x25519::_121665 = {0xDB41, 1};
@@ -165,4 +167,4 @@ void Encryptor_x25519::scalarmult(uint8_t *out, const uint8_t *scalar, const uin
     pack25519(out, a);
 }
 
-} // namespace psi::tools
+} // namespace psi::tools::crypt

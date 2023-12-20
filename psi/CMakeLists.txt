@@ -1,6 +1,7 @@
 include_directories(
     ${psi_logger_dir}/psi/include
     include
+    src
 )
 
 link_directories(
@@ -9,15 +10,20 @@ link_directories(
 )
 
 set (SOURCES
+    src/psi/tools/crypt/Encryptor_x25519.cpp
+    src/psi/tools/crypt/EncryptorAes.cpp
+    src/psi/tools/crypt/EncryptorBase64.cpp
     src/psi/tools/ByteBuffer.cpp
     src/psi/tools/Encryptor.cpp
     src/psi/tools/Tools.cpp
-    src/psi/tools/x25519.cpp
 )
 
 add_library(psi-tools ${SOURCES})
 
 set(TEST_SRC
+    tests/crypt/Encryptor_x25519_Tests.cpp
+    tests/crypt/EncryptorAesTests.cpp
+    tests/crypt/EncryptorBase64Tests.cpp
     tests/ByteBufferTests.cpp
     tests/EncryptorTests.cpp
     tests/ToolsTests.cpp
