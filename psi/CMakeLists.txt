@@ -10,9 +10,9 @@ link_directories(
 )
 
 set (SOURCES
-    src/psi/tools/crypt/Encryptor_x25519.cpp
-    src/psi/tools/crypt/EncryptorAes.cpp
-    src/psi/tools/crypt/EncryptorBase64.cpp
+    src/psi/tools/crypt/aes.cpp
+    src/psi/tools/crypt/base64.cpp
+    src/psi/tools/crypt/x25519.cpp
     src/psi/tools/ByteBuffer.cpp
     src/psi/tools/Encryptor.cpp
     src/psi/tools/Tools.cpp
@@ -21,9 +21,9 @@ set (SOURCES
 add_library(psi-tools ${SOURCES})
 
 set(TEST_SRC
-    tests/crypt/Encryptor_x25519_Tests.cpp
-    tests/crypt/EncryptorAesTests.cpp
-    tests/crypt/EncryptorBase64Tests.cpp
+    tests/crypt/aes_Tests.cpp
+    tests/crypt/base64_Tests.cpp
+    tests/crypt/x25519_Tests.cpp
     tests/ByteBufferTests.cpp
     tests/EncryptorTests.cpp
     tests/ToolsTests.cpp

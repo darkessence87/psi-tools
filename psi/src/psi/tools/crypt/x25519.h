@@ -4,7 +4,7 @@
 
 namespace psi::tools::crypt {
 
-class Encryptor_x25519
+class x25519
 {
 public:
     static void generate_keypair(uint8_t *pk, uint8_t *sk);

@@ -7,21 +7,21 @@
 #include <sstream>
 
 #include "psi/tools/Tools.h"
-#include "psi/tools/crypt/EncryptorBase64.h"
+#include "psi/tools/crypt/base64.h"
 
 using namespace psi::tools;
 using namespace psi::tools::crypt;
 
-TEST(EncryptorBase64Tests, EncryptionDecryption_Base64_Success)
+TEST(base64_Tests, EncryptionDecryption_Base64_Success)
 {
     auto doTest = [](const std::string &originMessage, const std::string &expectedEncryptedMessage) {
         ByteBuffer msg(originMessage.size());
         msg.writeString(originMessage);
 
-        ByteBuffer encryptedMessage = EncryptorBase64::encryptBase64(msg);
+        ByteBuffer encryptedMessage = base64::encryptBase64(msg);
         EXPECT_EQ(encryptedMessage.asString(), expectedEncryptedMessage);
 
-        ByteBuffer decryptedMessage = EncryptorBase64::decryptBase64(encryptedMessage);
+        ByteBuffer decryptedMessage = base64::decryptBase64(encryptedMessage);
         EXPECT_EQ(decryptedMessage.asString(), originMessage);
     };
 
@@ -41,9 +41,9 @@ TEST(EncryptorBase64Tests, EncryptionDecryption_Base64_Success)
            "raXkgeWF6aWsgbmUgcG9kZGVyemhpdmFldHN5YSk=");
 }
 
-TEST(EncryptorBase64Tests, EncryptionDecryption_Base64_Fail)
+TEST(base64_Tests, EncryptionDecryption_Base64_Fail)
 {
     ByteBuffer encryptedMessage(0u);
-    ByteBuffer decryptedMessage = EncryptorBase64::decryptBase64(encryptedMessage);
+    ByteBuffer decryptedMessage = base64::decryptBase64(encryptedMessage);
     EXPECT_TRUE(decryptedMessage.size() == 0);
 }

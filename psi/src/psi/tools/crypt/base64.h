@@ -4,7 +4,7 @@
 
 namespace psi::tools::crypt {
 
-class EncryptorBase64
+class base64
 {
 public:
     static const uint8_t m_base64Table[64u];
@@ -27,4 +27,4 @@ public:
     static ByteBuffer decryptBase64(const ByteBuffer &data);
 };
 
-} // namespace psi::tools
+} // namespace psi::tools::crypt

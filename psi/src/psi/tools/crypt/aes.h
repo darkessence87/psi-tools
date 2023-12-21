@@ -4,14 +4,11 @@
 
 namespace psi::tools::crypt {
 
-class EncryptorAes
+class aes
 {
 public:
     using DataBlock16 = uint8_t[4u][4u];
     using SubKey = uint8_t[16u];
-    using SubKey128 = uint32_t;
-    using SubKeys128 = SubKey[11u];
-    using SubKeys256 = SubKey[15u];
 
     static const uint8_t m_sBox[256u];
     static const uint8_t m_iBox[256u];
@@ -28,15 +25,19 @@ public:
     static void applySubKey(const uint8_t key[16u], DataBlock16 &block);
     static void writeBlock(const uint8_t *const data, size_t dataSz, DataBlock16 &block);
     static void readBlock(const DataBlock16 &block, uint8_t *data, size_t dataSz);
+    static void doRoundKeyEncode(const SubKey &key, DataBlock16 &block, bool isFinal = false);
+    static void doRoundKeyDecode(const SubKey &key, DataBlock16 &block, bool isFinal = false);
 
     template <uint8_t Nk, uint8_t Nr>
-    static ByteBuffer encryptAes_impl(const ByteBuffer &, const ByteBuffer &);
+    static ByteBuffer encryptAes_impl(const ByteBuffer &data, const ByteBuffer &key);
+    template <uint8_t Nk, uint8_t Nr>
+    static ByteBuffer encryptAes_impl(const uint8_t *data, size_t dataLen, const ByteBuffer &key);
 
     template <uint8_t Nk, uint8_t Nr>
-    static ByteBuffer decryptAes_impl(const ByteBuffer &, const ByteBuffer &);
+    static ByteBuffer decryptAes_impl(const ByteBuffer &data, const ByteBuffer &key);
 
     template <uint8_t Nk, uint8_t Nr>
-    static void generateSubKeys_impl(uint8_t[Nk * 4u], SubKey[Nr + 1u]);
+    static void generateSubKeys_impl(uint8_t key[Nk * 4u], SubKey subKeys[Nr + 1u]);
 };
 
 } // namespace psi::tools::crypt

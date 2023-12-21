@@ -1,9 +1,8 @@
 #include "psi/tools/Encryptor.h"
 
-#include "crypt/EncryptorAes.h"
-#include "crypt/EncryptorBase64.h"
-#include "crypt/Encryptor_x25519.h"
-
+#include "crypt/aes.h"
+#include "crypt/base64.h"
+#include "crypt/x25519.h"
 
 #ifdef PSI_LOGGER
 #include "psi/logger/Logger.h"
@@ -23,32 +22,32 @@ namespace psi::tools {
 
 ByteBuffer Encryptor::encryptBase64(const ByteBuffer &inputBuffer)
 {
-    return crypt::EncryptorBase64::encryptBase64(inputBuffer);
+    return crypt::base64::encryptBase64(inputBuffer);
 }
 
 ByteBuffer Encryptor::decryptBase64(const ByteBuffer &inputBuffer)
 {
-    return crypt::EncryptorBase64::decryptBase64(inputBuffer);
+    return crypt::base64::decryptBase64(inputBuffer);
 }
 
 ByteBuffer Encryptor::encryptAes128(const ByteBuffer &inputData, const ByteBuffer &key)
 {
-    return crypt::EncryptorAes::encryptAes_impl<4, 10>(inputData, key);
+    return crypt::aes::encryptAes_impl<4, 10>(inputData, key);
 }
 
 ByteBuffer Encryptor::decryptAes128(const ByteBuffer &inputData, const ByteBuffer &key)
 {
-    return crypt::EncryptorAes::decryptAes_impl<4, 10>(inputData, key);
+    return crypt::aes::decryptAes_impl<4, 10>(inputData, key);
 }
 
 ByteBuffer Encryptor::encryptAes256(const ByteBuffer &inputData, const ByteBuffer &key)
 {
-    return crypt::EncryptorAes::encryptAes_impl<8, 14>(inputData, key);
+    return crypt::aes::encryptAes_impl<8, 14>(inputData, key);
 }
 
 ByteBuffer Encryptor::decryptAes256(const ByteBuffer &inputData, const ByteBuffer &key)
 {
-    return crypt::EncryptorAes::decryptAes_impl<8, 14>(inputData, key);
+    return crypt::aes::decryptAes_impl<8, 14>(inputData, key);
 }
 
 ByteBuffer Encryptor::generateSessionKey()
@@ -98,17 +97,17 @@ ByteBuffer Encryptor::generateSessionKey()
 
 void Encryptor::x25519_generate_keypair(uint8_t *pk, uint8_t *sk)
 {
-    crypt::Encryptor_x25519::generate_keypair(pk, sk);
+    crypt::x25519::generate_keypair(pk, sk);
 }
 
 void Encryptor::x25519_scalarmult_base(uint8_t *out, const uint8_t *sk)
 {
-    crypt::Encryptor_x25519::scalarmult_base(out, sk);
+    crypt::x25519::scalarmult_base(out, sk);
 }
 
 void Encryptor::x25519_scalarmult(uint8_t *out, const uint8_t *sk, const uint8_t *pk)
 {
-    crypt::Encryptor_x25519::scalarmult(out, sk, pk);
+    crypt::x25519::scalarmult(out, sk, pk);
 }
 
 } // namespace psi::tools

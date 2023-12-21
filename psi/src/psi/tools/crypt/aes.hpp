@@ -1,4 +1,4 @@
-#include "EncryptorAes.h"
+#include "aes.h"
 
 #ifdef PSI_LOGGER
 #include "psi/logger/Logger.h"
@@ -16,28 +16,28 @@
 
 namespace psi::tools::crypt {
 
-inline void doRoundKeyEncode(const EncryptorAes::SubKey &key, EncryptorAes::DataBlock16 &block, bool isFinal = false)
+inline void aes::doRoundKeyEncode(const aes::SubKey &key, aes::DataBlock16 &block, bool isFinal)
 {
-    EncryptorAes::subBytes(EncryptorAes::m_sBox, block);
-    EncryptorAes::shiftRows(block);
+    aes::subBytes(aes::m_sBox, block);
+    aes::shiftRows(block);
     if (!isFinal) {
-        EncryptorAes::mixColumns(block);
+        aes::mixColumns(block);
     }
-    EncryptorAes::applySubKey(key, block);
+    aes::applySubKey(key, block);
 }
 
-inline void doRoundKeyDecode(const EncryptorAes::SubKey &key, EncryptorAes::DataBlock16 &block, bool isFinal = false)
+inline void aes::doRoundKeyDecode(const aes::SubKey &key, aes::DataBlock16 &block, bool isFinal)
 {
-    EncryptorAes::invShiftRows(block);
-    EncryptorAes::subBytes(EncryptorAes::m_iBox, block);
-    EncryptorAes::applySubKey(key, block);
+    aes::invShiftRows(block);
+    aes::subBytes(aes::m_iBox, block);
+    aes::applySubKey(key, block);
     if (!isFinal) {
-        EncryptorAes::invMixColumns(block);
+        aes::invMixColumns(block);
     }
 }
 
 template <uint8_t Nk, uint8_t Nr>
-ByteBuffer EncryptorAes::encryptAes_impl(const ByteBuffer &inputData, const ByteBuffer &key)
+ByteBuffer aes::encryptAes_impl(const ByteBuffer &inputData, const ByteBuffer &key)
 {
     if (key.size() != Nk * 4u) {
         return {};
@@ -88,7 +88,56 @@ ByteBuffer EncryptorAes::encryptAes_impl(const ByteBuffer &inputData, const Byte
 }
 
 template <uint8_t Nk, uint8_t Nr>
-ByteBuffer EncryptorAes::decryptAes_impl(const ByteBuffer &inputData, const ByteBuffer &key)
+ByteBuffer aes::encryptAes_impl(const uint8_t *m_inData, size_t dataLen, const ByteBuffer &key)
+{
+    if (key.size() != Nk * 4u) {
+        return {};
+    }
+
+    key.reset();
+
+    const uint8_t extraBytes = dataLen % 16u;
+    ByteBuffer result(extraBytes == 0 ? dataLen : (dataLen + 16u - extraBytes + 1));
+
+    SubKey m_subKeys[Nr + 1u];
+    generateSubKeys_impl<Nk, Nr>(key.data(), m_subKeys);
+
+    auto m_outData = result.data();
+
+    const size_t cycles = dataLen / 16u;
+
+    // main cycles
+    for (size_t cycleN = 0; cycleN < cycles; ++cycleN) {
+        DataBlock16 block;
+        writeBlock(&m_inData[cycleN * 16u], 16u, block);
+        applySubKey(m_subKeys[0], block);
+        for (uint8_t round = 1; round < Nr; ++round) {
+            doRoundKeyEncode(m_subKeys[round], block);
+        }
+        doRoundKeyEncode(m_subKeys[Nr], block, true);
+        readBlock(block, &m_outData[cycleN * 16u], 16u);
+    }
+    // additional cycle
+    if (extraBytes) {
+        uint8_t lastChunk[16u] = {'\0'};
+        memcpy(lastChunk, &m_inData[dataLen - extraBytes], extraBytes);
+
+        DataBlock16 block;
+        writeBlock(lastChunk, 16u, block);
+        applySubKey(m_subKeys[0], block);
+        for (uint8_t round = 1; round < Nr; ++round) {
+            doRoundKeyEncode(m_subKeys[round], block);
+        }
+        doRoundKeyEncode(m_subKeys[Nr], block, true);
+        readBlock(block, &m_outData[cycles * 16u], 16u);
+        memset(&m_outData[(cycles + 1) * 16u], uint8_t(extraBytes), 1);
+    }
+
+    return result;
+}
+
+template <uint8_t Nk, uint8_t Nr>
+ByteBuffer aes::decryptAes_impl(const ByteBuffer &inputData, const ByteBuffer &key)
 {
     if (key.size() != Nk * 4u) {
         return {};
@@ -141,7 +190,7 @@ ByteBuffer EncryptorAes::decryptAes_impl(const ByteBuffer &inputData, const Byte
 }
 
 template <uint8_t Nk, uint8_t Nr>
-void EncryptorAes::generateSubKeys_impl(uint8_t key[Nk * 4u], SubKey subKeys[Nr + 1u])
+void aes::generateSubKeys_impl(uint8_t key[Nk * 4u], SubKey subKeys[Nr + 1u])
 {
     // (Nr + 1) * 4 rows, 4 cols
     constexpr uint8_t SUB_WORDS = (Nr + 1) * 4u;
@@ -206,7 +255,7 @@ inline uint8_t mul14(uint8_t a)
     return mul2(c) ^ c ^ b;
 }
 
-const uint8_t EncryptorAes::m_sBox[256u] = {
+const uint8_t aes::m_sBox[256u] = {
     //0   1     2     3     4     5     6     7     8     9     a     b     c     d     e     f
     0x63, 0x7c, 0x77, 0x7b, 0xf2, 0x6b, 0x6f, 0xc5, 0x30, 0x01, 0x67, 0x2b, 0xfe, 0xd7, 0xab, 0x76, 0xca, 0x82, 0xc9,
     0x7d, 0xfa, 0x59, 0x47, 0xf0, 0xad, 0xd4, 0xa2, 0xaf, 0x9c, 0xa4, 0x72, 0xc0, 0xb7, 0xfd, 0x93, 0x26, 0x36, 0x3f,
@@ -223,7 +272,7 @@ const uint8_t EncryptorAes::m_sBox[256u] = {
     0x69, 0xd9, 0x8e, 0x94, 0x9b, 0x1e, 0x87, 0xe9, 0xce, 0x55, 0x28, 0xdf, 0x8c, 0xa1, 0x89, 0x0d, 0xbf, 0xe6, 0x42,
     0x68, 0x41, 0x99, 0x2d, 0x0f, 0xb0, 0x54, 0xbb, 0x16};
 
-const uint8_t EncryptorAes::m_iBox[256u] = {
+const uint8_t aes::m_iBox[256u] = {
     //0   1     2     3     4     5     6     7     8     9     a     b     c     d     e     f
     0x52, 0x09, 0x6a, 0xd5, 0x30, 0x36, 0xa5, 0x38, 0xbf, 0x40, 0xa3, 0x9e, 0x81, 0xf3, 0xd7, 0xfb, 0x7c, 0xe3, 0x39,
     0x82, 0x9b, 0x2f, 0xff, 0x87, 0x34, 0x8e, 0x43, 0x44, 0xc4, 0xde, 0xe9, 0xcb, 0x54, 0x7b, 0x94, 0x32, 0xa6, 0xc2,
@@ -240,9 +289,9 @@ const uint8_t EncryptorAes::m_iBox[256u] = {
     0xae, 0x2a, 0xf5, 0xb0, 0xc8, 0xeb, 0xbb, 0x3c, 0x83, 0x53, 0x99, 0x61, 0x17, 0x2b, 0x04, 0x7e, 0xba, 0x77, 0xd6,
     0x26, 0xe1, 0x69, 0x14, 0x63, 0x55, 0x21, 0x0c, 0x7d};
 
-const uint8_t EncryptorAes::m_rCon[10u] = {0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80, 0x1b, 0x36};
+const uint8_t aes::m_rCon[10u] = {0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80, 0x1b, 0x36};
 
-void EncryptorAes::subBytes(const uint8_t box[256u], EncryptorAes::DataBlock16 &block)
+void aes::subBytes(const uint8_t box[256u], aes::DataBlock16 &block)
 {
     for (size_t k = 0; k < 16; ++k) {
         const size_t r = k / 4;
@@ -251,7 +300,7 @@ void EncryptorAes::subBytes(const uint8_t box[256u], EncryptorAes::DataBlock16 &
     }
 }
 
-void EncryptorAes::shiftRows(EncryptorAes::DataBlock16 &block)
+void aes::shiftRows(aes::DataBlock16 &block)
 {
     // shift left 1 byte
     auto r1 = reinterpret_cast<uint32_t *>(&block[1]);
@@ -268,7 +317,7 @@ void EncryptorAes::shiftRows(EncryptorAes::DataBlock16 &block)
     block[3][0] = t;
 }
 
-void EncryptorAes::invShiftRows(EncryptorAes::DataBlock16 &block)
+void aes::invShiftRows(aes::DataBlock16 &block)
 {
     // shift right 1 byte
     auto r1 = reinterpret_cast<uint32_t *>(&block[1]);
@@ -285,7 +334,7 @@ void EncryptorAes::invShiftRows(EncryptorAes::DataBlock16 &block)
     block[3][3] = t;
 }
 
-void EncryptorAes::mixColumns(EncryptorAes::DataBlock16 &block)
+void aes::mixColumns(aes::DataBlock16 &block)
 {
     for (uint8_t col = 0; col < 4; ++col) {
         /**
@@ -311,7 +360,7 @@ void EncryptorAes::mixColumns(EncryptorAes::DataBlock16 &block)
     }
 }
 
-void EncryptorAes::invMixColumns(EncryptorAes::DataBlock16 &block)
+void aes::invMixColumns(aes::DataBlock16 &block)
 {
     for (uint8_t col = 0; col < 4; ++col) {
         /**
@@ -343,7 +392,7 @@ void EncryptorAes::invMixColumns(EncryptorAes::DataBlock16 &block)
     }
 }
 
-void EncryptorAes::applySubKey(const uint8_t key[16u], EncryptorAes::DataBlock16 &block)
+void aes::applySubKey(const uint8_t key[16u], aes::DataBlock16 &block)
 {
     for (size_t k = 0; k < 16; ++k) {
         const size_t r = k / 4;
@@ -352,7 +401,7 @@ void EncryptorAes::applySubKey(const uint8_t key[16u], EncryptorAes::DataBlock16
     }
 }
 
-void EncryptorAes::writeBlock(const uint8_t *const data, size_t dataSz, EncryptorAes::DataBlock16 &block)
+void aes::writeBlock(const uint8_t *const data, size_t dataSz, aes::DataBlock16 &block)
 {
     const size_t sz = dataSz > 16 ? 16 : dataSz;
     // swap rows and columns
@@ -363,7 +412,7 @@ void EncryptorAes::writeBlock(const uint8_t *const data, size_t dataSz, Encrypto
     }
 }
 
-void EncryptorAes::readBlock(const EncryptorAes::DataBlock16 &block, uint8_t *data, size_t dataSz)
+void aes::readBlock(const aes::DataBlock16 &block, uint8_t *data, size_t dataSz)
 {
     const size_t sz = dataSz > 16 ? 16 : dataSz;
     // swap rows and columns
@@ -374,7 +423,7 @@ void EncryptorAes::readBlock(const EncryptorAes::DataBlock16 &block, uint8_t *da
     }
 }
 
-void EncryptorAes::rotWord(uint8_t word[4])
+void aes::rotWord(uint8_t word[4])
 {
     uint8_t t = word[0];
     word[0] = word[1];
@@ -383,7 +432,7 @@ void EncryptorAes::rotWord(uint8_t word[4])
     word[3] = t;
 }
 
-void EncryptorAes::subWord(uint8_t word[4])
+void aes::subWord(uint8_t word[4])
 {
     word[0] = m_sBox[word[0]];
     word[1] = m_sBox[word[1]];

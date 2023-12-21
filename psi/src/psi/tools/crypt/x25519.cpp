@@ -1,13 +1,13 @@
-#include "Encryptor_x25519.h"
+#include "x25519.h"
 
 #include "psi/tools/Encryptor.h"
 
 namespace psi::tools::crypt {
 
 static const uint8_t _9[32] = {9};
-const Encryptor_x25519::field_elem Encryptor_x25519::_121665 = {0xDB41, 1};
+const x25519::field_elem x25519::_121665 = {0xDB41, 1};
 
-void Encryptor_x25519::unpack25519(field_elem out, const uint8_t *in)
+void x25519::unpack25519(field_elem out, const uint8_t *in)
 {
     int i;
     for (i = 0; i < 16; ++i)
@@ -15,7 +15,7 @@ void Encryptor_x25519::unpack25519(field_elem out, const uint8_t *in)
     out[15] &= 0x7fff;
 }
 
-void Encryptor_x25519::carry25519(field_elem elem)
+void x25519::carry25519(field_elem elem)
 {
     int i;
     int64_t carry;
@@ -29,21 +29,21 @@ void Encryptor_x25519::carry25519(field_elem elem)
     }
 }
 
-void Encryptor_x25519::fadd(field_elem out, const field_elem a, const field_elem b) /* out = a + b */
+void x25519::fadd(field_elem out, const field_elem a, const field_elem b) /* out = a + b */
 {
     int i;
     for (i = 0; i < 16; ++i)
         out[i] = a[i] + b[i];
 }
 
-void Encryptor_x25519::fsub(field_elem out, const field_elem a, const field_elem b) /* out = a - b */
+void x25519::fsub(field_elem out, const field_elem a, const field_elem b) /* out = a - b */
 {
     int i;
     for (i = 0; i < 16; ++i)
         out[i] = a[i] - b[i];
 }
 
-void Encryptor_x25519::fmul(field_elem out, const field_elem a, const field_elem b) /* out = a * b */
+void x25519::fmul(field_elem out, const field_elem a, const field_elem b) /* out = a * b */
 {
     int64_t i, j, product[31];
     for (i = 0; i < 31; ++i)
@@ -60,7 +60,7 @@ void Encryptor_x25519::fmul(field_elem out, const field_elem a, const field_elem
     carry25519(out);
 }
 
-void Encryptor_x25519::finverse(field_elem out, const field_elem in)
+void x25519::finverse(field_elem out, const field_elem in)
 {
     field_elem c;
     int i;
@@ -75,7 +75,7 @@ void Encryptor_x25519::finverse(field_elem out, const field_elem in)
         out[i] = c[i];
 }
 
-void Encryptor_x25519::swap25519(field_elem p, field_elem q, int64_t bit)
+void x25519::swap25519(field_elem p, field_elem q, int64_t bit)
 {
     int64_t t, i, c = ~(bit - 1);
     for (i = 0; i < 16; ++i) {
@@ -85,7 +85,7 @@ void Encryptor_x25519::swap25519(field_elem p, field_elem q, int64_t bit)
     }
 }
 
-void Encryptor_x25519::pack25519(uint8_t *out, const field_elem in)
+void x25519::pack25519(uint8_t *out, const field_elem in)
 {
     int i, j, carry;
     field_elem m, t;
@@ -111,18 +111,18 @@ void Encryptor_x25519::pack25519(uint8_t *out, const field_elem in)
     }
 }
 
-void Encryptor_x25519::scalarmult_base(uint8_t *out, const uint8_t *scalar)
+void x25519::scalarmult_base(uint8_t *out, const uint8_t *scalar)
 {
     scalarmult(out, scalar, _9);
 }
 
-void Encryptor_x25519::generate_keypair(uint8_t *pk, uint8_t *sk)
+void x25519::generate_keypair(uint8_t *pk, uint8_t *sk)
 {
     memcpy(sk, Encryptor::generateSessionKey().data(), 32);
     scalarmult_base(pk, sk);
 }
 
-void Encryptor_x25519::scalarmult(uint8_t *out, const uint8_t *scalar, const uint8_t *point)
+void x25519::scalarmult(uint8_t *out, const uint8_t *scalar, const uint8_t *point)
 {
     uint8_t clamped[32];
     int64_t bit, i;

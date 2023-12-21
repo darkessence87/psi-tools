@@ -8,12 +8,12 @@
 
 #include "psi/tools/ByteBuffer.h"
 #include "psi/tools/Tools.h"
-#include "psi/tools/crypt/Encryptor_x25519.h"
+#include "psi/tools/crypt/x25519.h"
 
 using namespace psi::tools;
 using namespace psi::tools::crypt;
 
-TEST(Encryptor_x25519_Tests, scalarmult_base)
+TEST(x25519_Tests, scalarmult_base)
 {
     {
         SCOPED_TRACE("// case 1. sender keys");
@@ -22,7 +22,7 @@ TEST(Encryptor_x25519_Tests, scalarmult_base)
                                  0x72, 0x51, 0xb2, 0x66, 0x45, 0xdf, 0x4c, 0x2f, 0x87, 0xeb, 0xc0,
                                  0x99, 0x2a, 0xb1, 0x77, 0xfb, 0xa5, 0x1d, 0xb9, 0x2c, 0x2a};
 
-        Encryptor_x25519::scalarmult_base(sender_pk, sender_sk);
+        x25519::scalarmult_base(sender_pk, sender_sk);
 
         ByteBuffer pkBuffer(32);
         pkBuffer.write(sender_pk);
@@ -42,7 +42,7 @@ TEST(Encryptor_x25519_Tests, scalarmult_base)
                                    0x8b, 0x83, 0x80, 0x0e, 0xe6, 0x6f, 0x3b, 0xb1, 0x29, 0x26, 0x18,
                                    0xb6, 0xfd, 0x1c, 0x2f, 0x8b, 0x27, 0xff, 0x88, 0xe0, 0xeb};
 
-        Encryptor_x25519::scalarmult_base(receiver_pk, receiver_sk);
+        x25519::scalarmult_base(receiver_pk, receiver_sk);
 
         ByteBuffer pkBuffer(32);
         pkBuffer.write(receiver_pk);
@@ -56,7 +56,7 @@ TEST(Encryptor_x25519_Tests, scalarmult_base)
     }
 }
 
-TEST(Encryptor_x25519_Tests, scalarmult)
+TEST(x25519_Tests, scalarmult)
 {
     {
         SCOPED_TRACE("// case 1. shared key sender side");
@@ -68,7 +68,7 @@ TEST(Encryptor_x25519_Tests, scalarmult)
                                    0xc2, 0xec, 0xe4, 0x35, 0x37, 0x3f, 0x83, 0x43, 0xc8, 0x5b, 0x78,
                                    0x67, 0x4d, 0xad, 0xfc, 0x7e, 0x14, 0x6f, 0x88, 0x2b, 0x4f};
 
-        Encryptor_x25519::scalarmult(shared_pk, sender_sk, receiver_pk);
+        x25519::scalarmult(shared_pk, sender_sk, receiver_pk);
 
         ByteBuffer shared_pkBuffer(32);
         shared_pkBuffer.write(shared_pk);
@@ -90,7 +90,7 @@ TEST(Encryptor_x25519_Tests, scalarmult)
                                  0xdc, 0xb4, 0x3e, 0xf7, 0x5a, 0x0d, 0xbf, 0x3a, 0x0d, 0x26, 0x38,
                                  0x1a, 0xf4, 0xeb, 0xa4, 0xa9, 0x8e, 0xaa, 0x9b, 0x4e, 0x6a};
 
-        Encryptor_x25519::scalarmult(shared_pk, receiver_sk, sender_pk);
+        x25519::scalarmult(shared_pk, receiver_sk, sender_pk);
 
         ByteBuffer shared_pkBuffer(32);
         shared_pkBuffer.write(shared_pk);

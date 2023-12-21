@@ -1,6 +1,6 @@
 #include "psi/tools/Encryptor.h"
 
-#include "EncryptorBase64.h"
+#include "base64.h"
 
 #ifdef PSI_LOGGER
 #include "psi/logger/Logger.h"
@@ -18,15 +18,15 @@
 
 namespace psi::tools::crypt {
 
-const uint8_t EncryptorBase64::m_base64Table[] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M',
-                                                  'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
-                                                  'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm',
-                                                  'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z',
-                                                  '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '+', '/'};
+const uint8_t base64::m_base64Table[] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M',
+                                         'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
+                                         'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm',
+                                         'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z',
+                                         '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '+', '/'};
 
-const uint8_t EncryptorBase64::m_base64Pad = '=';
+const uint8_t base64::m_base64Pad = '=';
 
-ByteBuffer EncryptorBase64::encryptBase64(const ByteBuffer &inputBuffer)
+ByteBuffer base64::encryptBase64(const ByteBuffer &inputBuffer)
 {
     const size_t outSize = ((inputBuffer.size() / 3) + (inputBuffer.size() % 3 > 0)) * 4;
     ByteBuffer encodedString(outSize);
@@ -105,7 +105,7 @@ ByteBuffer EncryptorBase64::encryptBase64(const ByteBuffer &inputBuffer)
     return encodedString;
 }
 
-ByteBuffer EncryptorBase64::decryptBase64(const ByteBuffer &inputBuffer)
+ByteBuffer base64::decryptBase64(const ByteBuffer &inputBuffer)
 {
     const size_t inputLen = inputBuffer.size();
     if (inputLen % 4 || inputBuffer.size() == 0) {
