@@ -39,52 +39,7 @@ inline void aes::doRoundKeyDecode(const aes::SubKey &key, aes::DataBlock16 &bloc
 template <uint8_t Nk, uint8_t Nr>
 ByteBuffer aes::encryptAes_impl(const ByteBuffer &inputData, const ByteBuffer &key)
 {
-    if (key.size() != Nk * 4u) {
-        return {};
-    }
-
-    inputData.reset();
-    key.reset();
-
-    const uint8_t extraBytes = inputData.size() % 16u;
-    ByteBuffer result(extraBytes == 0 ? inputData.size() : (inputData.size() + 16u - extraBytes + 1));
-
-    SubKey m_subKeys[Nr + 1u];
-    generateSubKeys_impl<Nk, Nr>(key.data(), m_subKeys);
-
-    const auto &m_inData = inputData.data();
-    auto m_outData = result.data();
-
-    const size_t cycles = inputData.size() / 16u;
-
-    // main cycles
-    for (size_t cycleN = 0; cycleN < cycles; ++cycleN) {
-        DataBlock16 block;
-        writeBlock(&m_inData[cycleN * 16u], 16u, block);
-        applySubKey(m_subKeys[0], block);
-        for (uint8_t round = 1; round < Nr; ++round) {
-            doRoundKeyEncode(m_subKeys[round], block);
-        }
-        doRoundKeyEncode(m_subKeys[Nr], block, true);
-        readBlock(block, &m_outData[cycleN * 16u], 16u);
-    }
-    // additional cycle
-    if (extraBytes) {
-        uint8_t lastChunk[16u] = {'\0'};
-        memcpy(lastChunk, &m_inData[inputData.size() - extraBytes], extraBytes);
-
-        DataBlock16 block;
-        writeBlock(lastChunk, 16u, block);
-        applySubKey(m_subKeys[0], block);
-        for (uint8_t round = 1; round < Nr; ++round) {
-            doRoundKeyEncode(m_subKeys[round], block);
-        }
-        doRoundKeyEncode(m_subKeys[Nr], block, true);
-        readBlock(block, &m_outData[cycles * 16u], 16u);
-        memset(&m_outData[(cycles + 1) * 16u], uint8_t(extraBytes), 1);
-    }
-
-    return result;
+    return encryptAes_impl<Nk, Nr>(inputData.data(), inputData.length(), key);
 }
 
 template <uint8_t Nk, uint8_t Nr>
