@@ -10,6 +10,7 @@ link_directories(
 )
 
 set (SOURCES
+    src/psi/tools/crypt/aes_gcm.cpp
     src/psi/tools/crypt/aes.cpp
     src/psi/tools/crypt/base64.cpp
     src/psi/tools/crypt/x25519.cpp
@@ -21,6 +22,7 @@ set (SOURCES
 add_library(psi-tools ${SOURCES})
 
 set(TEST_SRC
+    tests/crypt/aes_gcm_Tests.cpp
     tests/crypt/aes_Tests.cpp
     tests/crypt/base64_Tests.cpp
     tests/crypt/x25519_Tests.cpp

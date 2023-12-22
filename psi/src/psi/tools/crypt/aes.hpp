@@ -1,3 +1,8 @@
+/**
+ * @brief https://nvlpubs.nist.gov/nistpubs/FIPS/NIST.FIPS.197.pdf
+ * 
+ */
+
 #include "aes.h"
 
 #ifdef PSI_LOGGER
