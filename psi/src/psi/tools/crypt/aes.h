@@ -35,6 +35,8 @@ public:
 
     template <uint8_t Nk, uint8_t Nr>
     static ByteBuffer decryptAes_impl(const ByteBuffer &data, const ByteBuffer &key);
+    template <uint8_t Nk, uint8_t Nr>
+    static ByteBuffer decryptAes_impl(const uint8_t *data, size_t dataLen, const ByteBuffer &key);
 
     template <uint8_t Nk, uint8_t Nr>
     static void generateSubKeys_impl(uint8_t key[Nk * 4u], SubKey subKeys[Nr + 1u]);

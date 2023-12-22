@@ -7,6 +7,7 @@ namespace psi::tools::crypt {
 template ByteBuffer aes::encryptAes_impl<4u, 10u>(const ByteBuffer &, const ByteBuffer &);
 template ByteBuffer aes::encryptAes_impl<4u, 10u>(const uint8_t *, size_t dataLen, const ByteBuffer &);
 template ByteBuffer aes::decryptAes_impl<4u, 10u>(const ByteBuffer &, const ByteBuffer &);
+template ByteBuffer aes::decryptAes_impl<4u, 10u>(const uint8_t *, size_t dataLen, const ByteBuffer &);
 template void aes::generateSubKeys_impl<4u, 10u>(uint8_t[4u * 4u], SubKey[10u + 1u]);
 // AES-256
 template ByteBuffer aes::encryptAes_impl<8u, 14u>(const ByteBuffer &, const ByteBuffer &);

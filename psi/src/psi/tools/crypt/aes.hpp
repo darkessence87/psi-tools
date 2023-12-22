@@ -44,7 +44,7 @@ inline void aes::doRoundKeyDecode(const aes::SubKey &key, aes::DataBlock16 &bloc
 template <uint8_t Nk, uint8_t Nr>
 ByteBuffer aes::encryptAes_impl(const ByteBuffer &inputData, const ByteBuffer &key)
 {
-    return encryptAes_impl<Nk, Nr>(inputData.data(), inputData.length(), key);
+    return encryptAes_impl<Nk, Nr>(inputData.data(), inputData.size(), key);
 }
 
 template <uint8_t Nk, uint8_t Nr>
@@ -99,23 +99,27 @@ ByteBuffer aes::encryptAes_impl(const uint8_t *m_inData, size_t dataLen, const B
 template <uint8_t Nk, uint8_t Nr>
 ByteBuffer aes::decryptAes_impl(const ByteBuffer &inputData, const ByteBuffer &key)
 {
+    return decryptAes_impl<Nk, Nr>(inputData.data(), inputData.size(), key);
+}
+
+template <uint8_t Nk, uint8_t Nr>
+ByteBuffer aes::decryptAes_impl(const uint8_t *m_inData, size_t dataLen, const ByteBuffer &key)
+{
     if (key.size() != Nk * 4u) {
         return {};
     }
 
-    inputData.reset();
     key.reset();
 
     // make data copy
-    const uint8_t lenOffset = inputData.size() % 16u;
-    const uint8_t extraBytes = lenOffset ? inputData.at(inputData.size() - 1) : 0;
-    const size_t resultLen = lenOffset ? inputData.size() - 1 - 16u + extraBytes : inputData.size();
+    const uint8_t lenOffset = dataLen % 16u;
+    const uint8_t extraBytes = lenOffset ? m_inData[dataLen - 1] : 0;
+    const size_t resultLen = lenOffset ? dataLen - 1 - 16u + extraBytes : dataLen;
     ByteBuffer result(resultLen);
 
     SubKey m_subKeys[Nr + 1u];
     generateSubKeys_impl<Nk, Nr>(key.data(), m_subKeys);
 
-    const auto &m_inData = inputData.data();
     auto m_outData = result.data();
 
     const size_t cycles = resultLen / 16u;
@@ -134,7 +138,7 @@ ByteBuffer aes::decryptAes_impl(const ByteBuffer &inputData, const ByteBuffer &k
     // additional cycle
     if (extraBytes) {
         uint8_t lastChunk[16u] = {'\0'};
-        memcpy(lastChunk, &m_inData[inputData.size() - 1 - 16u], 16u);
+        memcpy(lastChunk, &m_inData[dataLen - 1 - 16u], 16u);
 
         DataBlock16 block;
         writeBlock(lastChunk, 16u, block);

@@ -243,4 +243,78 @@ ByteBuffer aes_gcm::encrypt(const ByteBuffer &data, const ByteBuffer &key, const
     return out;
 }
 
+ByteBuffer aes_gcm::decrypt(const ByteBuffer &data, const ByteBuffer &key, const ByteBuffer &iv, const ByteBuffer &tag, const ByteBuffer &acc)
+{
+    ByteBuffer out(data.size());
+
+    // H: E(K, 0^128);
+    DataBlock16 h = {};
+    aes::encryptAes_impl<4, 10>(DataBlock16 {}, 16u, key).read(h);
+    // printBlockHex(h, "h: ");
+
+    // Y[0]: IV || 0^31;            // if len(IV) = 96 bits
+    // Y[0]: GHASH(H,{},IV);        // otherwise
+    DataBlock16 counter = {};
+    if (iv.length() == 12u) {
+        iv.read(counter);
+        counter[15] = 0x01;
+    } else {
+        ghash(h, DataBlock16 {}, 0, iv.length() ? iv.data() : DataBlock16 {}, iv.length(), counter);
+    }
+    // printBlockHex(counter, "y[0]: ");
+
+    DataBlock16 y0_encrypted = {};
+    aes::encryptAes_impl<4, 10>(counter, 16u, key).read(y0_encrypted);
+    // printBlockHex(y0_encrypted, "E(K,y[0]): ");
+
+    // C*[n]: P*[n] XOR MSB[u](E(K, Y[n]))      // u - number of bits in final block
+    // T: MSB[t](GHASH(H,A,C) XOR E(K, Y[0]))
+    ByteBuffer deTag(16u);
+    ghash(h,
+          acc.length() ? acc.data() : DataBlock16 {},
+          acc.length(),
+          data.length() ? data.data() : DataBlock16 {},
+          data.length(),
+          deTag.data());
+    xorBlocks(deTag.data(), y0_encrypted, deTag.data());
+    if (deTag.asHexString() != tag.asHexString()) {
+        return ByteBuffer(0);
+    }
+    // std::cout << "C: " << out.asHexString() << std::endl;
+    // printBlockHex(tag, "T: ");
+
+    // Y[i]: incr(Y[i-1])           // for i = 1, ..., n - 1
+    // C[i]: P[i] XOR E(K, Y[i])    // for i = 1, ..., n - 1
+    const size_t n = data.length() / 16u;
+    for (size_t i = 0; i < n; ++i) {
+        incr(counter);
+        // printBlockHex(counter, "y[i]: ");
+
+        DataBlock16 cipherBlock = {};
+        DataBlock16 dataBlock = {};
+        data.read(dataBlock);
+        aes::encryptAes_impl<4, 10>(counter, 16, key).read(cipherBlock);
+        // printBlockHex(cipherBlock, "E(K,y[i]): ");
+        xorBlocks(dataBlock, cipherBlock, cipherBlock);
+
+        out.write(cipherBlock);
+    }
+
+    if (auto extra = data.length() % 16u) {
+        incr(counter);
+        // printBlockHex(counter, "y[n]: ");
+
+        DataBlock16 cipherBlock = {};
+        DataBlock16 dataBlock = {};
+        data.readBytes(dataBlock, extra);
+        aes::encryptAes_impl<4, 10>(counter, 16, key).read(cipherBlock);
+        // printBlockHex(cipherBlock, "E(K,y[n]): ");
+        xorBlocks(dataBlock, cipherBlock, cipherBlock);
+
+        out.writeArray(cipherBlock, extra);
+    }
+
+    return out;
+}
+
 } // namespace psi::tools::crypt

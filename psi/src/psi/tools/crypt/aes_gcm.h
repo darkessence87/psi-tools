@@ -23,6 +23,11 @@ public:
                               const ByteBuffer &iv,
                               Tag &tag,
                               const ByteBuffer &acc = ByteBuffer(0));
+    static ByteBuffer decrypt(const ByteBuffer &encryptedData,
+                              const ByteBuffer &key,
+                              const ByteBuffer &iv,
+                              const ByteBuffer &tag,
+                              const ByteBuffer &acc = ByteBuffer(0));
 
 private:
     static const uint8_t R_POLY;
