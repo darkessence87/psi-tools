@@ -187,17 +187,31 @@ TEST(ByteBufferTests, reset)
     EXPECT_EQ(data.m_writeIndex, 0u);
 }
 
-TEST(ByteBufferTests, skip)
+TEST(ByteBufferTests, skipRead)
 {
     const size_t N = 3u;
 
     ByteBuffer data(new uint8_t[N] {'b', 'a', 'c'}, N);
 
-    EXPECT_EQ(data.skip(2), true);
+    EXPECT_EQ(data.skipRead(2), true);
     EXPECT_EQ(data.m_readIndex, 2u);
 
-    EXPECT_EQ(data.skip(2), false);
+    EXPECT_EQ(data.skipRead(2), false);
     EXPECT_EQ(data.m_readIndex, 2u);
+}
+
+TEST(ByteBufferTests, skipWrite)
+{
+    const size_t N = 3u;
+
+    ByteBuffer data(new uint8_t[N] {'b', 'a', 'c'}, N);
+    data.reset();
+
+    EXPECT_EQ(data.skipWrite(2), true);
+    EXPECT_EQ(data.m_writeIndex, 2u);
+
+    EXPECT_EQ(data.skipWrite(2), false);
+    EXPECT_EQ(data.m_writeIndex, 2u);
 }
 
 TEST(ByteBufferTests, at)
@@ -348,9 +362,9 @@ TEST(ByteBufferTests, remaininglength)
     data.write(uint64_t(20));
     data.write(uint64_t(20));
     EXPECT_EQ(data.remainingLength(), 16);
-    data.skip(8);
+    data.skipRead(8);
     EXPECT_EQ(data.remainingLength(), 8);
-    data.skip(8);
+    data.skipRead(8);
     EXPECT_EQ(data.remainingLength(), 0);
 }
 

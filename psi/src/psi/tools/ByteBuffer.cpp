@@ -103,7 +103,7 @@ void ByteBuffer::reset() const
     m_writeIndex = 0;
 }
 
-bool ByteBuffer::skip(const size_t N) const
+bool ByteBuffer::skipRead(const size_t N) const
 {
     if (m_readIndex + N > m_bufferSz) {
         LOG_ERROR("Data (size: " << N << ") cannot be skipped. " << (m_bufferSz - m_readIndex)
@@ -112,6 +112,18 @@ bool ByteBuffer::skip(const size_t N) const
     }
 
     m_readIndex += N;
+    return true;
+}
+
+bool ByteBuffer::skipWrite(const size_t N) const
+{
+    if (m_writeIndex + N > m_bufferSz) {
+        LOG_ERROR("Data (size: " << N << ") cannot be skipped. " << (m_bufferSz - m_writeIndex)
+                                 << " bytes left to reach the end.");
+        return false;
+    }
+
+    m_writeIndex += N;
     return true;
 }
 

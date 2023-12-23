@@ -283,7 +283,16 @@ public:
      * @return true if operation is successful, readIndex is increased by N
      * @return false if operation is failed, readIndex is not changed
      */
-    bool skip(const size_t N) const;
+    bool skipRead(const size_t N) const;
+
+    /**
+     * @brief Increases writeIndex by N.
+     * 
+     * @param N number of bytes to skip
+     * @return true if operation is successful, writeIndex is increased by N
+     * @return false if operation is failed, writeIndex is not changed
+     */
+    bool skipWrite(const size_t N) const;
 
     /**
      * @brief Returns value of specified byte from ByteBuffer.
