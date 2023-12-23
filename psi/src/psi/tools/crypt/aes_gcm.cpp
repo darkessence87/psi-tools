@@ -21,7 +21,7 @@
 
 namespace psi::tools::crypt {
 
-void printBlock(const uint8_t *a)
+static void printBlock(const uint8_t *a)
 {
     for (uint8_t i = 0; i < 16; ++i) {
         for (uint8_t j = 0; j < 8; ++j) {
@@ -32,7 +32,7 @@ void printBlock(const uint8_t *a)
     std::cout << std::endl;
 }
 
-void printBlockHex(const uint8_t a[16], const std::string &name = "")
+static void printBlockHex(const uint8_t a[16], const std::string &name = "")
 {
     ByteBuffer b(16);
     b.writeArray(a, 16);

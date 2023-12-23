@@ -2,8 +2,6 @@
 
 #include "psi/tools/ByteBuffer.h"
 
-#include <bitset>
-
 namespace psi::tools::crypt {
 
 class aes_gcm
