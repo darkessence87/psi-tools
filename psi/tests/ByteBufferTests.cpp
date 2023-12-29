@@ -4,7 +4,7 @@
 
 #define protected public
 #include "psi/tools/ByteBuffer.h"
-#undef private
+#undef protected
 
 using namespace psi::tools;
 
