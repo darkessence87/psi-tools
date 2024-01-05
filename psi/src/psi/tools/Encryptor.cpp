@@ -153,19 +153,23 @@ ByteBuffer Encryptor::generateSessionKey()
     return sessionKey;
 }
 
-void Encryptor::x25519_generate_keypair(uint8_t *pk, uint8_t *sk)
+void Encryptor::x25519_generate_keypair(ByteBuffer &publicKey, ByteBuffer &privateKey)
 {
-    crypt::x25519::generate_keypair(pk, sk);
+    crypt::x25519::generate_keypair(publicKey.data(), privateKey.data());
 }
 
-void Encryptor::x25519_scalarmult_base(uint8_t *out, const uint8_t *sk)
+ByteBuffer Encryptor::x25519_scalarmult_base(const ByteBuffer &privateKey)
 {
-    crypt::x25519::scalarmult_base(out, sk);
+    ByteBuffer out(32u);
+    crypt::x25519::scalarmult_base(out.data(), privateKey.data());
+    return out;
 }
 
-void Encryptor::x25519_scalarmult(uint8_t *out, const uint8_t *sk, const uint8_t *pk)
+ByteBuffer Encryptor::x25519_scalarmult(const ByteBuffer &privateKey, const ByteBuffer &publicKey)
 {
-    crypt::x25519::scalarmult(out, sk, pk);
+    ByteBuffer out(32u);
+    crypt::x25519::scalarmult(out.data(), privateKey.data(), publicKey.data());
+    return out;
 }
 
 } // namespace psi::tools

@@ -151,9 +151,30 @@ public:
      */
     static ByteBuffer generateSessionKey();
 
-    static void x25519_generate_keypair(uint8_t *pk, uint8_t *sk);
-    static void x25519_scalarmult_base(uint8_t *out, const uint8_t *sk);
-    static void x25519_scalarmult(uint8_t *out, const uint8_t *sk, const uint8_t *pk);
+    /**
+     * @brief Generate random public/private key pair.
+     * 
+     * @param publicKey (out) random public key
+     * @param privateKey (out) random private key
+     */
+    static void x25519_generate_keypair(ByteBuffer &publicKey, ByteBuffer &privateKey);
+
+    /**
+     * @brief Get public key from private key.
+     * 
+     * @param privateKey (in) private key buffer
+     * @return ByteBuffer public key buffer
+     */
+    static ByteBuffer x25519_scalarmult_base(const ByteBuffer &privateKey);
+
+    /**
+     * @brief Get shared key from public/private key pair.
+     * 
+     * @param privateKey (in) private key buffer
+     * @param publicKey (in) public key buffer
+     * @return ByteBuffer shared key buffer
+     */
+    static ByteBuffer x25519_scalarmult(const ByteBuffer &privateKey, const ByteBuffer &publicKey);
 };
 
 } // namespace psi::tools

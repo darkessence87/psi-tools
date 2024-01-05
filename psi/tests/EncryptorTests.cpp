@@ -331,10 +331,7 @@ TEST(EncryptorTests, TlsConnection)
     ByteBuffer serverFinished("140000209b9b141d906337fbd2cbdce71df4deda4ab42c309572cb7fffee5454b78f0718", true);
     std::string clientFinishedStr = "14000020a8ec436d677634ae525ac1fcebe11a039ec17694fac6e98527b642f2edd5ce61";
 
-    uint8_t shared_key[32];
-    Encryptor::x25519_scalarmult(shared_key, clientPrivateKey.data(), serverPublicKey.data());
-    ByteBuffer sharedKey(32u);
-    sharedKey.write(shared_key);
+    ByteBuffer sharedKey = Encryptor::x25519_scalarmult(clientPrivateKey, serverPublicKey);
     EXPECT_EQ(sharedKey.asHexString(), "8bd4054fb55b9d63fdfbacf9f04b9f0d35e6d63f537563efd46272900f89492d");
 
     auto client_server_hash = Encryptor::sha256(clientHello + serverHello);
