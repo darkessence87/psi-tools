@@ -17,73 +17,110 @@ class ByteBuffer
 {
 public:
     /**
-     * @brief Construct a new Byte Buffer object. Default size: 1024 bytes.
+     * @brief Construct a new ByteBuffer object. Default size: 0 bytes.
      * 
      */
     ByteBuffer();
 
     /**
-     * @brief Construct a new Byte Buffer object using provided size.
+     * @brief Construct a new ByteBuffer object using provided size.
      * 
+     * @param sz number of bytes
      */
-    ByteBuffer(size_t);
+    explicit ByteBuffer(size_t sz);
 
     /**
-     * @brief Construct a new Byte Buffer object by moving an existing byte buffer into ByteBuffer as r-value.
+     * @brief Construct a new ByteBuffer object by moving an existing array into ByteBuffer as r-value.
      * 
+     * @param arr existing array
+     * @param sz size of existing array
      */
-    explicit ByteBuffer(uint8_t &&, size_t);
+    explicit ByteBuffer(uint8_t &&arr, size_t sz);
 
     /**
-     * @brief Construct a new Byte Buffer object by moving an existing byte buffer into ByteBuffer as l-value.
+     * @brief Construct a new ByteBuffer object by moving an existing array into ByteBuffer as l-value.
      * 
+     * @param arr existing array
+     * @param sz size of existing array
      */
-    explicit ByteBuffer(uint8_t *, size_t);
+    explicit ByteBuffer(uint8_t *arr, size_t sz);
 
     /**
-     * @brief Construct a new Byte Buffer object by string
+     * @brief Construct a new ByteBuffer object by string
      * 
      * @param data string
-     * @param isHex if true buffer interprets data as hex input
+     * @param isHex if 'true' buffer interprets data as hex input
      * default value: false
      */
     ByteBuffer(const std::string &data, bool isHex = false);
 
     /**
-     * @brief Destroy the Byte Buffer object. Frees memory.
+     * @brief Construct a new ByteBuffer object from another ByteBuffer object.
+     * 
+     * @param bb another byte buffer
+     */
+    ByteBuffer(const ByteBuffer &bb);
+
+    /**
+     * @brief Destroy the ByteBuffer object. Free's memory.
      * 
      */
     virtual ~ByteBuffer();
 
     /**
-     * @brief Construct a new Byte Buffer object from another ByteBuffer object.
+     * @brief Replace existing ByteBuffer object with provided ByteBuffer object.
      * 
-     */
-    ByteBuffer(const ByteBuffer &);
-
-    /**
-     * @brief Replaces existing ByteBuffer object with provided ByteBuffer object.
-     * 
+     * @param bb another byte buffer
      * @return ByteBuffer& reference to existing ByteBuffer object
      */
-    ByteBuffer &operator=(const ByteBuffer &);
+    ByteBuffer &operator=(const ByteBuffer &bb);
 
     /**
-     * @brief Clears the data without freeing or resizing the memory.
-     * Sets the buffer to default state. ByteBuffer might be read/write like after first creation.
+     * @brief Append existing ByteBuffer object by another ByteBuffer object.
+     * 
+     * @param bb another byte buffer
+     * @return ByteBuffer& reference to existing ByteBuffer object
+     */
+    ByteBuffer &operator+=(const ByteBuffer &bb);
+
+    /**
+     * @brief Concatenate one ByteBuffer object with another ByteBuffer object.
+     * 
+     * @param bb another byte buffer
+     * @return ByteBuffer new concatenated ByteBuffer object
+     */
+    ByteBuffer operator+(const ByteBuffer &bb) const;
+
+    /**
+     * @brief Clear the data without freeing or resizing the memory.
+     * Set the buffer to default state. ByteBuffer might be read/write like after first creation.
      * 
      */
     void clear();
 
     /**
-     * @brief Sets the buffer to default state. ByteBuffer might be read/write like after first creation.
+     * @brief Set the buffer to default state. ByteBuffer might be read/write like after first creation.
      * This method does not change the data already written to buffer.
      * 
      */
     void reset() const;
 
     /**
-     * @brief Writes custom data into ByteBuffer.
+     * @brief Set read index to default value. ByteBuffer might be read like after first creation.
+     * This method does not change the data already written to buffer.
+     * 
+     */
+    void resetRead() const;
+
+    /**
+     * @brief Set write index to default value. ByteBuffer might be written like after first creation.
+     * This method does not change the data already written to buffer.
+     * 
+     */
+    void resetWrite() const;
+
+    /**
+     * @brief Write custom data into ByteBuffer.
      * 
      * @tparam T type of custom data
      * @param data custom data
@@ -106,7 +143,7 @@ public:
     }
 
     /**
-     * @brief Writes custom data into ByteBuffer in opposite endian.
+     * @brief Write custom data into ByteBuffer in opposite endian.
      * 
      * @tparam T type of custom data
      * @param data custom data
@@ -120,7 +157,7 @@ public:
     }
 
     /**
-     * @brief Reads custom data from ByteBuffer.
+     * @brief Read custom data from ByteBuffer.
      * 
      * @tparam T type of custom data
      * @param data custom data
@@ -143,7 +180,7 @@ public:
     }
 
     /**
-     * @brief Reads custom data from ByteBuffer in opposite endian.
+     * @brief Read custom data from ByteBuffer in opposite endian.
      * 
      * @tparam T type of custom data
      * @param data custom data
@@ -162,7 +199,7 @@ public:
     }
 
     /**
-     * @brief Writes custom data array into ByteBuffer.
+     * @brief Write custom data array into ByteBuffer.
      * 
      * @tparam T type of custom data array
      * @param data custom data array
@@ -186,7 +223,7 @@ public:
     }
 
     /**
-     * @brief Reads custom data array from ByteBuffer.
+     * @brief Read custom data array from ByteBuffer.
      * 
      * @tparam T type of custom data array
      * @tparam N number of elements in a custom data array
@@ -209,7 +246,7 @@ public:
     }
 
     /**
-     * @brief Reads N bytes into custom data array from ByteBuffer.
+     * @brief Read N bytes into custom data array from ByteBuffer.
      * 
      * @tparam T type of custom data array
      * @tparam N number of elements in a custom data array
@@ -231,7 +268,7 @@ public:
     }
 
     /**
-     * @brief Writes string data into ByteBuffer.
+     * @brief Write string data into ByteBuffer.
      * 
      * @param data string data
      * @return true if operation is successful, writeIndex is increased by length of string
@@ -240,7 +277,7 @@ public:
     bool writeString(const std::string &data);
 
     /**
-     * @brief Writes string data represented as hex into ByteBuffer.
+     * @brief Write string data represented as hex into ByteBuffer.
      * 
      * @param data string data in hex format, for instance "0104fdae00a0"
      * @return true if operation is successful, writeIndex is increased by half length of string
@@ -249,7 +286,7 @@ public:
     bool writeHexString(const std::string &data);
 
     /**
-     * @brief Reads string data from ByteBuffer.
+     * @brief Read string data from ByteBuffer.
      * 
      * @param data reference to string data
      * @param N length of string to be read
@@ -259,7 +296,7 @@ public:
     bool readString(std::string &data, const size_t N) const;
 
     /**
-     * @brief Reads N number of bytes to new ByteBuffer.
+     * @brief Read N number of bytes to new ByteBuffer.
      * 
      * @param N number of bytes to be read
      * @return ByteBuffer new ByteBuffer
@@ -267,7 +304,7 @@ public:
     ByteBuffer readToByteBuffer(const size_t N) const;
 
     /**
-     * @brief Reads N number of bytes to existing ByteBuffer.
+     * @brief Read N number of bytes to existing ByteBuffer.
      * 
      * @param buffer target buffer
      * @param N number of bytes to be read
@@ -277,7 +314,16 @@ public:
     bool readToByteBuffer(ByteBuffer &buffer, const size_t N) const;
 
     /**
-     * @brief Increases readIndex by N.
+     * @brief Read all bytes to existing ByteBuffer.
+     * 
+     * @param buffer target buffer
+     * @return true if operation is successful, readIndex is increased by length of string
+     * @return false if operation is failed, readIndex is not changed
+     */
+    bool readToByteBuffer(ByteBuffer &buffer) const;
+
+    /**
+     * @brief Increase readIndex by N.
      * 
      * @param N number of bytes to skip
      * @return true if operation is successful, readIndex is increased by N
@@ -286,7 +332,7 @@ public:
     bool skipRead(const size_t N) const;
 
     /**
-     * @brief Increases writeIndex by N.
+     * @brief Increase writeIndex by N.
      * 
      * @param N number of bytes to skip
      * @return true if operation is successful, writeIndex is increased by N
@@ -295,7 +341,7 @@ public:
     bool skipWrite(const size_t N) const;
 
     /**
-     * @brief Returns value of specified byte from ByteBuffer.
+     * @brief Return value of specified byte from ByteBuffer.
      * 
      * @param pos poisition of byte
      * @return uint8_t value
@@ -303,35 +349,35 @@ public:
     uint8_t at(const size_t pos) const;
 
     /**
-     * @brief Returns pointer to memory of buffer.
+     * @brief Return pointer to memory of buffer.
      * 
      * @return uint8_t* pointer to buffer's data
      */
     uint8_t *data() const;
 
     /**
-     * @brief Converts ByteBuffer to vector of bytes.
+     * @brief Convert ByteBuffer to vector of bytes.
      * 
      * @return const std::vector<uint8_t> vector of bytes
      */
     const std::vector<uint8_t> asVector() const;
 
     /**
-     * @brief Converts ByteBuffer to vector of uint64_t.
+     * @brief Convert ByteBuffer to vector of uint64_t.
      * 
      * @return const std::vector<uint64_t> represents full buffer as hexed integers
      */
     const std::vector<uint64_t> asHash() const;
 
     /**
-     * @brief Converts ByteBuffer to string in hex format.
+     * @brief Convert ByteBuffer to string in hex format.
      * 
      * @return const std::string string in hex format
      */
     const std::string asHexString() const;
 
     /**
-     * @brief Converts ByteBuffer to string in hex format more readable for human.
+     * @brief Convert ByteBuffer to string in hex format more readable for human.
      * Additionally formatted like: "[ 01 04 fd ae 00 a0 ]"
      * 
      * @return const std::string string in hex format
@@ -339,7 +385,7 @@ public:
     const std::string asHexStringFormatted() const;
 
     /**
-     * @brief Converts ByteBuffer to string in a format readable for human.
+     * @brief Convert ByteBuffer to string in a format readable for human.
      * Non-readable symbols are ignored.
      * 
      * @return const std::string string in readable format
@@ -347,23 +393,26 @@ public:
     const std::string asString() const;
 
     /**
-     * @brief Returns size of ByteBuffer.
+     * @brief Return size of ByteBuffer.
+     * Size: memory allocated for buffer.
      * 
-     * @return size_t 
+     * @return size_t memory allocated for buffer
      */
     size_t size() const;
 
     /**
-     * @brief Returns length of data of ByteBuffer.
+     * @brief Return length of data of ByteBuffer.
+     * Length: number of bytes written to the buffer.
      * 
-     * @return size_t 
+     * @return size_t number of bytes written to the buffer
      */
     size_t length() const;
 
     /**
-     * @brief Returns remaining length of data of ByteBuffer.
+     * @brief Return remaining length of data of ByteBuffer.
+     * Remaining length: number of bytes can be read from buffer.
      * 
-     * @return size_t 
+     * @return size_t number of bytes can be read from buffer
      */
     size_t remainingLength() const;
 

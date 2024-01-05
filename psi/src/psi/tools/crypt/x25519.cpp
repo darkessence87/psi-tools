@@ -5,7 +5,7 @@
 namespace psi::tools::crypt {
 
 static const uint8_t _9[32] = {9};
-const x25519::field_elem x25519::_121665 = {0xDB41, 1};
+const x25519::field_elem x25519::_121665 = {0xdb41, 1};
 
 void x25519::unpack25519(field_elem out, const uint8_t *in)
 {

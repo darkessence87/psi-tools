@@ -20,12 +20,14 @@ public:
                               const ByteBuffer &key,
                               const ByteBuffer &iv,
                               Tag &tag,
-                              const ByteBuffer &acc = ByteBuffer(0));
+                              const ByteBuffer &acc = {});
+    static ByteBuffer encrypt(const ByteBuffer &data, const ByteBuffer &key, const ByteBuffer &iv);
     static ByteBuffer decrypt(const ByteBuffer &encryptedData,
                               const ByteBuffer &key,
                               const ByteBuffer &iv,
                               const ByteBuffer &tag,
-                              const ByteBuffer &acc = ByteBuffer(0));
+                              const ByteBuffer &acc = {});
+    static ByteBuffer decrypt(const ByteBuffer &encryptedData, const ByteBuffer &key, const ByteBuffer &tag);
 
 private:
     static const uint8_t R_POLY;

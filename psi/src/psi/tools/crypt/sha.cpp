@@ -1,5 +1,6 @@
 /**
- * @brief https://csrc.nist.gov/files/pubs/fips/180-4/upd1/final/docs/fips180-4-draft-aug2014.pdf
+ * https://csrc.nist.gov/files/pubs/fips/180-4/upd1/final/docs/fips180-4-draft-aug2014.pdf
+ * https://datatracker.ietf.org/doc/html/rfc4231#page-4
  * 
  */
 #include "sha.h"
@@ -20,13 +21,6 @@
 
 namespace psi::tools::crypt {
 
-static void printBlockHex(const uint32_t a[64], const std::string &name = "")
-{
-    ByteBuffer b(512);
-    b.write(a);
-    std::cout << name << b.asHexString() << std::endl;
-}
-
 const uint32_t sha::K[64] = {0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5, 0x3956c25b, 0x59f111f1, 0x923f82a4,
                              0xab1c5ed5, 0xd807aa98, 0x12835b01, 0x243185be, 0x550c7dc3, 0x72be5d74, 0x80deb1fe,
                              0x9bdc06a7, 0xc19bf174, 0xe49b69c1, 0xefbe4786, 0x0fc19dc6, 0x240ca1cc, 0x2de92c6f,
@@ -37,8 +31,17 @@ const uint32_t sha::K[64] = {0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5, 0x3
                              0x1e376c08, 0x2748774c, 0x34b0bcb5, 0x391c0cb3, 0x4ed8aa4a, 0x5b9cca4f, 0x682e6ff3,
                              0x748f82ee, 0x78a5636f, 0x84c87814, 0x8cc70208, 0x90befffa, 0xa4506ceb, 0xbef9a3f7,
                              0xc67178f2};
-
 const uint32_t sha::H[8] = {0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a, 0x510e527f, 0x9b05688c, 0x1f83d9ab, 0x5be0cd19};
+const uint8_t sha::INN_PAD[64] = {0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36,
+                                  0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36,
+                                  0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36,
+                                  0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36,
+                                  0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36};
+const uint8_t sha::OUT_PAD[64] = {0x5c, 0x5c, 0x5c, 0x5c, 0x5c, 0x5c, 0x5c, 0x5c, 0x5c, 0x5c, 0x5c, 0x5c, 0x5c,
+                                  0x5c, 0x5c, 0x5c, 0x5c, 0x5c, 0x5c, 0x5c, 0x5c, 0x5c, 0x5c, 0x5c, 0x5c, 0x5c,
+                                  0x5c, 0x5c, 0x5c, 0x5c, 0x5c, 0x5c, 0x5c, 0x5c, 0x5c, 0x5c, 0x5c, 0x5c, 0x5c,
+                                  0x5c, 0x5c, 0x5c, 0x5c, 0x5c, 0x5c, 0x5c, 0x5c, 0x5c, 0x5c, 0x5c, 0x5c, 0x5c,
+                                  0x5c, 0x5c, 0x5c, 0x5c, 0x5c, 0x5c, 0x5c, 0x5c, 0x5c, 0x5c, 0x5c, 0x5c};
 
 ByteBuffer sha::padMessage(const ByteBuffer &data)
 {
@@ -63,7 +66,6 @@ void sha::prepareMessageSchedule(const uint8_t *block, uint32_t *w)
         uint32_t s1 = rightRotate(w[i - 2], 17) ^ rightRotate(w[i - 2], 19) ^ (w[i - 2] >> 10);
         w[i] = w[i - 16] + s0 + w[i - 7] + s1;
     }
-    // printBlockHex(w, "w: ");
 }
 
 uint32_t sha::rightRotate(uint32_t v, uint8_t n)
@@ -125,5 +127,76 @@ ByteBuffer sha::encode256(const ByteBuffer &data)
 
     return out;
 }
+
+ByteBuffer sha::hmac256(const ByteBuffer &key, const ByteBuffer &data)
+{
+    key.resetRead();
+    data.resetRead();
+
+    ByteBuffer paddedKey(64u);
+    if (key.size() > 64u) {
+        encode256(key).readToByteBuffer(paddedKey, 32u);
+    } else {
+        key.readToByteBuffer(paddedKey, key.size());
+    }
+
+    auto k = paddedKey.data();
+    ByteBuffer iKeyPad(64u);
+    iKeyPad.write(INN_PAD);
+    ByteBuffer oKeyPad(64u);
+    oKeyPad.write(OUT_PAD);
+    for (uint8_t i = 0; i < 64u; ++i) {
+        iKeyPad.data()[i] ^= k[i];
+        oKeyPad.data()[i] ^= k[i];
+    }
+
+    ByteBuffer ihash(64u + data.size());
+    iKeyPad.readToByteBuffer(ihash, 64u);
+    data.readToByteBuffer(ihash, data.size());
+    ihash = encode256(ihash);
+
+    ByteBuffer hash(64u + 32u);
+    oKeyPad.readToByteBuffer(hash, 64u);
+    ihash.readToByteBuffer(hash, 32u);
+
+    return encode256(hash);
+}
+
+ByteBuffer sha::hkdf256Extract(const ByteBuffer &kMat, const ByteBuffer &seed)
+{
+    return sha::hmac256(seed, kMat);
+};
+
+ByteBuffer sha::hkdf256Expand(const ByteBuffer &prk, const ByteBuffer &info, size_t len)
+{
+    const auto blocks = len / 32u + 1;
+    ByteBuffer okm(blocks * 32u);
+    ByteBuffer temp(32u + info.size() + 1u);
+
+    uint8_t i = 1;
+    while (okm.length() < len) {
+        prk.resetRead();
+        info.resetRead();
+        info.readToByteBuffer(temp, info.size());
+        temp.write(i);
+
+        temp.resetRead();
+        auto t = hmac256(prk, temp.readToByteBuffer(temp.length()));
+        t.readToByteBuffer(okm, t.size());
+
+        temp.clear();
+        t.resetRead();
+        t.readToByteBuffer(temp, t.size());
+        ++i;
+    }
+
+    return okm.readToByteBuffer(len);
+};
+
+ByteBuffer sha::hkdf256(const ByteBuffer &key, const ByteBuffer &seed, const ByteBuffer &info, size_t len)
+{
+    auto prk = hkdf256Extract(key, seed);
+    return hkdf256Expand(prk, info, len);
+};
 
 } // namespace psi::tools::crypt

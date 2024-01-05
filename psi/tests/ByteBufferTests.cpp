@@ -11,8 +11,8 @@ using namespace psi::tools;
 TEST(ByteBufferTests, default_ctor)
 {
     ByteBuffer data;
-    EXPECT_EQ(data.size(), 1024u);
-    EXPECT_NE(data.data(), nullptr);
+    EXPECT_EQ(data.size(), 0u);
+    EXPECT_EQ(data.data(), nullptr);
 
     EXPECT_EQ(data.m_readIndex, 0u);
     EXPECT_EQ(data.m_writeIndex, 0u);

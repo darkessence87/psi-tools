@@ -17,7 +17,7 @@
 namespace psi::tools {
 
 ByteBuffer::ByteBuffer()
-    : m_bufferSz(1024u)
+    : m_bufferSz(0u)
     , m_buffer(new uint8_t[m_bufferSz]())
 {
 }
@@ -53,14 +53,6 @@ ByteBuffer::ByteBuffer(const std::string &data, bool isHex)
     }
 }
 
-ByteBuffer::~ByteBuffer()
-{
-    if (m_buffer) {
-        delete[] m_buffer;
-        m_buffer = nullptr;
-    }
-}
-
 ByteBuffer::ByteBuffer(const ByteBuffer &bb)
     : m_bufferSz(bb.m_bufferSz)
     , m_buffer(new uint8_t[m_bufferSz]())
@@ -68,6 +60,14 @@ ByteBuffer::ByteBuffer(const ByteBuffer &bb)
     , m_writeIndex(bb.m_writeIndex)
 {
     memcpy(m_buffer, bb.m_buffer, m_bufferSz);
+}
+
+ByteBuffer::~ByteBuffer()
+{
+    if (m_buffer) {
+        delete[] m_buffer;
+        m_buffer = nullptr;
+    }
 }
 
 ByteBuffer &ByteBuffer::operator=(const ByteBuffer &bb)
@@ -91,6 +91,37 @@ ByteBuffer &ByteBuffer::operator=(const ByteBuffer &bb)
     return *this;
 }
 
+ByteBuffer &ByteBuffer::operator+=(const ByteBuffer &bb)
+{
+    auto newBufferSz = this->m_bufferSz + bb.size();
+    auto newBuffer = new uint8_t[newBufferSz]();
+
+    if (m_buffer) {
+        memcpy(newBuffer, m_buffer, m_bufferSz);
+
+        delete[] m_buffer;
+        m_buffer = nullptr;
+    }
+
+    m_buffer = newBuffer;
+    m_bufferSz = newBufferSz;
+
+    bb.readToByteBuffer(*this, bb.m_bufferSz);
+
+    return *this;
+}
+
+ByteBuffer ByteBuffer::operator+(const ByteBuffer &bb) const
+{
+    this->resetRead();
+    bb.resetRead();
+
+    ByteBuffer newBuffer(this->m_bufferSz + bb.size());
+    this->readToByteBuffer(newBuffer, m_bufferSz);
+    bb.readToByteBuffer(newBuffer, bb.m_bufferSz);
+    return newBuffer;
+}
+
 void ByteBuffer::clear()
 {
     memset(m_buffer, 0, m_bufferSz);
@@ -99,7 +130,17 @@ void ByteBuffer::clear()
 
 void ByteBuffer::reset() const
 {
+    resetRead();
+    resetWrite();
+}
+
+void ByteBuffer::resetRead() const
+{
     m_readIndex = 0;
+}
+
+void ByteBuffer::resetWrite() const
+{
     m_writeIndex = 0;
 }
 
@@ -314,6 +355,27 @@ ByteBuffer ByteBuffer::readToByteBuffer(const size_t N) const
 bool ByteBuffer::readToByteBuffer(ByteBuffer &buffer, const size_t N) const
 {
     const auto sz = N;
+    if (m_readIndex + sz > m_bufferSz) {
+        LOG_ERROR("Data (size: " << sz << ") cannot be read. " << (m_bufferSz - m_readIndex)
+                                 << " bytes left to reach the end.");
+        return false;
+    }
+
+    if (buffer.m_writeIndex + sz > buffer.m_bufferSz) {
+        LOG_ERROR("Data (size: " << sz << ") cannot be written. " << (buffer.m_bufferSz - buffer.m_writeIndex)
+                                 << " bytes left to reach the end.");
+        return false;
+    }
+
+    readBytes(buffer.m_buffer + buffer.m_writeIndex, sz);
+    buffer.m_writeIndex += sz;
+
+    return true;
+}
+
+bool ByteBuffer::readToByteBuffer(ByteBuffer &buffer) const
+{
+    const auto sz = length();
     if (m_readIndex + sz > m_bufferSz) {
         LOG_ERROR("Data (size: " << sz << ") cannot be read. " << (m_bufferSz - m_readIndex)
                                  << " bytes left to reach the end.");

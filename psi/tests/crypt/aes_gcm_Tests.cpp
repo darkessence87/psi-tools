@@ -245,3 +245,43 @@ TEST(aes_gcm_Tests, decrypt)
         EXPECT_EQ(decodedData.asHexString(), "d9313225f88406e5a55909c5aff5269a86a7a9531534f7da2e4c303d8a318a721c3c0c95956809532fcf0e2449a6b525b16aedf5aa0de657ba637b39");
     }
 }
+
+TEST(aes_gcm_Tests, encrypt_decrypt)
+{
+    auto doTest = [](const auto &testCase, const auto &d, const auto &k, const auto &i) {
+        SCOPED_TRACE(testCase);
+
+        ByteBuffer data(d, true);
+        ByteBuffer key(k, true);
+        ByteBuffer iv(i, true);
+        aes_gcm::Tag tag = {};
+        auto encoded = aes_gcm::encrypt(data, key, iv, tag);
+        ByteBuffer tagBuffer(16u);
+        tagBuffer.write(tag);
+
+        data.resetRead();
+        key.resetRead();
+        iv.resetRead();
+        auto decoded = aes_gcm::decrypt(encoded, key, iv, tagBuffer);
+        EXPECT_EQ(data.asHexString(), decoded.asHexString());
+    };
+
+    doTest("// case 1.", "", "00000000000000000000000000000000", "000000000000000000000000");
+    doTest("// case 2.", "", "00000000000000000000000000000000", "00000000000000000000000000000000");
+    doTest("// case 3.",
+           "42831ec2217774244b7221b784d0d49ce3aa212f2c02a4e035c17e2329aca12e21d514b25466931c7d8f6a5aac84aa051ba30b396a0"
+           "aac973d58e091473f5985",
+           "feffe9928665731c6d6a8f9467308308",
+           "cafebabefacedbaddecaf888");
+    doTest("// case 4.",
+           "42831ec2217774244b7221b784d0d49ce3aa212f2c02a4e035c17e2329aca12e21d514b25466931c7d8f6a5aac84aa051ba30b396a0"
+           "aac973d58e091473f5985",
+           "feffe9928665731c6d6a8f9467308308",
+           "cafebabefacedbad");
+    doTest("// case 5.",
+           "42831ec2217774244b7221b784d0d49ce3aa212f2c02a4e035c17e2329aca12e21d514b25466931c7d8f6a5aac84aa051ba30b396a0"
+           "aac973d58e091473f5985",
+           "feffe9928665731c6d6a8f9467308308",
+           "cafebabefacedbad");
+    doTest("// case 6.", "010203040506070809aaabbccddeeff", "00112233445566778899aabbccddeeff", "1234567890abcdef");
+}

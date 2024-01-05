@@ -1,7 +1,9 @@
 #include "psi/tools/Encryptor.h"
 
 #include "crypt/aes.h"
+#include "crypt/aes_gcm.h"
 #include "crypt/base64.h"
+#include "crypt/sha.h"
 #include "crypt/x25519.h"
 
 #ifdef PSI_LOGGER
@@ -40,6 +42,27 @@ ByteBuffer Encryptor::decryptAes128(const ByteBuffer &inputData, const ByteBuffe
     return crypt::aes::decryptAes_impl<4, 10>(inputData, key);
 }
 
+ByteBuffer Encryptor::encryptAes128Gcm(const ByteBuffer &inputData,
+                                       const ByteBuffer &key,
+                                       const ByteBuffer &iv,
+                                       ByteBuffer &tagBuffer,
+                                       const ByteBuffer &acc)
+{
+    crypt::aes_gcm::Tag tag;
+    auto encoded = crypt::aes_gcm::encrypt(inputData, key, iv, tag, acc);
+    tagBuffer.write(tag);
+    return encoded;
+}
+
+ByteBuffer Encryptor::decryptAes128Gcm(const ByteBuffer &inputData,
+                                       const ByteBuffer &key,
+                                       const ByteBuffer &iv,
+                                       const ByteBuffer &tag,
+                                       const ByteBuffer &acc)
+{
+    return crypt::aes_gcm::decrypt(inputData, key, iv, tag, acc);
+}
+
 ByteBuffer Encryptor::encryptAes256(const ByteBuffer &inputData, const ByteBuffer &key)
 {
     return crypt::aes::encryptAes_impl<8, 14>(inputData, key);
@@ -48,6 +71,41 @@ ByteBuffer Encryptor::encryptAes256(const ByteBuffer &inputData, const ByteBuffe
 ByteBuffer Encryptor::decryptAes256(const ByteBuffer &inputData, const ByteBuffer &key)
 {
     return crypt::aes::decryptAes_impl<8, 14>(inputData, key);
+}
+
+ByteBuffer Encryptor::sha256(const ByteBuffer &data)
+{
+    return crypt::sha::encode256(data);
+}
+
+ByteBuffer Encryptor::hmac256(const ByteBuffer &key, const ByteBuffer &data)
+{
+    return crypt::sha::hmac256(key, data);
+}
+
+ByteBuffer Encryptor::hkdf256(const ByteBuffer &key, const ByteBuffer &seed, const ByteBuffer &info, size_t len)
+{
+    return crypt::sha::hkdf256(key, seed, info, len);
+}
+
+ByteBuffer Encryptor::hkdf256Expand(const ByteBuffer &prk, const ByteBuffer &info, size_t len)
+{
+    return crypt::sha::hkdf256Expand(prk, info, len);
+}
+
+ByteBuffer Encryptor::hkdf256ExpandLabel(const ByteBuffer &prk, const std::string &label, const ByteBuffer &hash, size_t len)
+{
+    prk.resetRead();
+    hash.resetRead();
+
+    ByteBuffer info(3u + label.size() + 1u + hash.size());
+    info.write(uint8_t(0));
+    info.write(uint8_t(len));
+    info.write(uint8_t(label.size()));
+    info.writeString(label);
+    info.write(uint8_t(hash.size()));
+    hash.readToByteBuffer(info, hash.size());
+    return crypt::sha::hkdf256Expand(prk, info, len);
 }
 
 ByteBuffer Encryptor::generateSessionKey()
