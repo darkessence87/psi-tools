@@ -5,7 +5,7 @@
 namespace psi::tools {
 
 BigInteger::BigInteger()
-    : BigInteger(0)
+    : BigInteger(0u)
 {
 }
 
