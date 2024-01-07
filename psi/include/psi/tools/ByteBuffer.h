@@ -1,5 +1,6 @@
 #pragma once
 
+#include <set>
 #include <stdint.h>
 #include <string>
 #include <vector>
@@ -294,6 +295,16 @@ public:
      * @return false if operation is failed, readIndex is not changed
      */
     bool readString(std::string &data, const size_t N) const;
+
+    /**
+     * @brief Read string data from ByteBuffer until any of delimiters is met.
+     * 
+     * @param data reference to string data
+     * @param delimiters list of delimiters. Default: {0x0a, 0x0d, 0x17}
+     * @return true if operation is successful, readIndex is increased by length of string
+     * @return false if operation is failed, readIndex is not changed
+     */
+    bool readLine(std::string &data, const std::set<uint8_t> &delimiters = {0x0a, 0x0d, 0x17}) const;
 
     /**
      * @brief Read N number of bytes to new ByteBuffer.

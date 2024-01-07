@@ -336,6 +336,30 @@ bool ByteBuffer::readString(std::string &data, const size_t N) const
     return true;
 }
 
+bool ByteBuffer::readLine(std::string &data, const std::set<uint8_t> &delimiters) const
+{
+    std::ostringstream os;
+
+    uint8_t b = 0;
+    size_t trailedDelimiters = 0;
+    while (read(b)) {
+        if (delimiters.find(b) != delimiters.end()) {
+            ++trailedDelimiters;
+        } else {
+            if (trailedDelimiters) {
+                --m_readIndex;
+                break;
+            }
+            os << b;
+        }
+    }
+
+    data.clear();
+    data = os.str();
+
+    return remainingLength() > 0;
+}
+
 ByteBuffer ByteBuffer::readToByteBuffer(const size_t N) const
 {
     const auto sz = N;

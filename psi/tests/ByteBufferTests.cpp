@@ -401,6 +401,38 @@ TEST(ByteBufferTests, readString)
     EXPECT_EQ(str, "abcd");
 }
 
+TEST(ByteBufferTests, readLine)
+{
+    using Expected = std::vector<std::string>;
+    using Delims = std::set<uint8_t>;
+    auto doTest = [](const auto &testCaseName, const auto &dataHex, const Expected &expected, const Delims &delims = {}) {
+        SCOPED_TRACE(testCaseName);
+
+        ByteBuffer data(dataHex, true);
+        Expected lines;
+        std::string line;
+        if (delims.empty()) {
+            while (data.readLine(line) || !line.empty()) {
+                lines.emplace_back(line);
+            }
+        } else {
+            while (data.readLine(line, delims) || !line.empty()) {
+                lines.emplace_back(line);
+            }
+        }
+        EXPECT_EQ(lines, expected);
+    };
+
+    doTest("case 1. Header delimiter", "0d616263", {"", "abc"});
+    doTest("case 2. Trailed delimiter", "6162630a", {"abc"});
+    doTest("case 3. Middle delimiter", "61620d63", {"ab", "c"});
+    doTest("case 4. Mixed delimiters", "0d61620d630d", {"", "ab", "c"});
+    doTest("case 5. No delimiters", "616263", {"abc"});
+    doTest("case 6. Only delimiters", "0a0d", {});
+    doTest("case 7. Empty buffer", "", {});
+    doTest("case 8. Custom delimiters", "6162636465666768", {"a", "c", "e", "g"}, {0x62, 0x64, 0x66, 0x68});
+}
+
 TEST(ByteBufferTests, readToByteBuffer)
 {
     const size_t N = 10u;
