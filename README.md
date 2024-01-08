@@ -9,3 +9,4 @@
 * [1 Tools example](https://github.com/darkessence87/psi-tools/blob/master/psi/examples/1_ToolsExamples.cpp)
 * [2 ByteBuffer example](https://github.com/darkessence87/psi-tools/blob/master/psi/examples/2_ByteBufferExamples.cpp)
 * [3 Encryptor example](https://github.com/darkessence87/psi-tools/blob/master/psi/examples/3_EncryptorExamples.cpp)
+* [4 BigInteger example](https://github.com/darkessence87/psi-tools/blob/master/psi/examples/4_BigIntegerExamples.cpp)
