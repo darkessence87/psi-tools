@@ -17,6 +17,7 @@ set (SOURCES
     src/psi/tools/crypt/x25519.cpp
     src/psi/tools/BigInteger.cpp
     src/psi/tools/ByteBuffer.cpp
+    src/psi/tools/HttpParser.cpp
     src/psi/tools/Encryptor.cpp
     src/psi/tools/Tools.cpp
 )
@@ -32,6 +33,7 @@ set(TEST_SRC
     tests/BigIntegerTests.cpp
     tests/ByteBufferTests.cpp
     tests/EncryptorTests.cpp
+    tests/HttpParserTests.cpp
     tests/ToolsTests.cpp
 )
 psi_make_tests("Tools" "${TEST_SRC}" "psi-tools;psi-logger;psi-shared")
