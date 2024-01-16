@@ -1,3 +1,4 @@
+#include "TestHelper.h"
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
@@ -6,6 +7,7 @@
 #undef private
 
 using namespace psi::tools;
+using namespace psi::test;
 
 TEST(BigIntegerTests, default_ctor)
 {
@@ -312,4 +314,9 @@ TEST(BigIntegerTests, substract)
     doTest("case 10", BigInteger({0xffffffffffffffff, 1, 0xffffffffffffffff}), 1, 1, {0xffffffffffffffff, 0, 0xffffffffffffffff});
     doTest("case 11", BigInteger({0xffffffffffffffff, 0, 0, 1}), 1, 2, {0xffffffffffffffff, 0, 0xffffffffffffffff});
     doTest("case 12", BigInteger({0xffffffffffffffff, 0, 0, 0, 0, 0, 0xff}), 0xff, 6, {0xffffffffffffffff});
+}
+
+TEST(BigIntegerTests, DISABLED_performance)
+{
+    // TestHelper::timeFn("1. ")
 }

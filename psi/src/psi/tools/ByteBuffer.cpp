@@ -285,10 +285,8 @@ bool ByteBuffer::writeString(const std::string &data)
         return false;
     }
 
-    for (const uint8_t value : data) {
-        m_buffer[m_writeIndex] = value;
-        ++m_writeIndex;
-    }
+    std::memcpy(&m_buffer[m_writeIndex], &data[0], sz);
+    m_writeIndex += sz;
 
     return true;
 }
@@ -307,9 +305,23 @@ bool ByteBuffer::writeHexString(const std::string &data)
         return false;
     }
 
+    // specific 'stoul' is faster than standart for hex digits
+    auto stoul = [](uint8_t *data) -> uint8_t {
+        auto get = [](uint8_t c) -> uint8_t {
+            if (c >= 0x30 && c <= 0x39) {
+                return c - uint8_t(0x30);
+            } else if (c >= 0x61 && c <= 0x66) {
+                return c - uint8_t(0x57);
+            } else if (c >= 0x41 && c <= 0x46) {
+                return c - uint8_t(0x37);
+            }
+            throw std::invalid_argument("Invalid argument provided: is not hex-digit");
+        };
+        return (get(data[0]) << 4) | get(data[1]);
+    };
+
     for (size_t i = 0; i < data.size(); i += 2) {
-        const std::string temp = data.substr(i, 2);
-        const uint8_t v = static_cast<uint8_t>(std::stoul(temp, nullptr, 16));
+        const uint8_t v = stoul((uint8_t *)&data[i]);
         m_buffer[m_writeIndex] = v;
         ++m_writeIndex;
     }
@@ -328,34 +340,54 @@ bool ByteBuffer::readString(std::string &data, const size_t N) const
 
     data.clear();
     data.resize(sz);
-    for (size_t i = 0; i < sz; ++i) {
-        data[i] = m_buffer[m_readIndex];
-        ++m_readIndex;
-    }
+    std::memcpy(&data[0], &m_buffer[m_readIndex], sz);
+    m_readIndex += sz;
 
     return true;
 }
 
-bool ByteBuffer::readLine(std::string &data, const std::set<uint8_t> &delimiters) const
+bool ByteBuffer::readLine(std::string &data, const uint8_t *delimiters, size_t N) const
 {
-    std::ostringstream os;
+    uint8_t delims[3] = {0x0a, 0x0d, 0x17};
+    if (!delimiters) {
+        delimiters = delims;
+        N = 3;
+    }
+    constexpr size_t BLOCK_SZ = 64u;
+    uint8_t cache[BLOCK_SZ];
+    size_t index = 0;
+    size_t blockIndex = 0;
+
+    data.clear();
+    data.resize(BLOCK_SZ);
 
     uint8_t b = 0;
     size_t trailedDelimiters = 0;
     while (read(b)) {
-        if (delimiters.find(b) != delimiters.end()) {
+        bool isDelimiter = false;
+        for (uint8_t k = 0; k < N; ++k) {
+            if (delimiters[k] == b) {
+                isDelimiter = true;
+                break;
+            }
+        }
+        if (isDelimiter) {
             ++trailedDelimiters;
         } else {
             if (trailedDelimiters) {
                 --m_readIndex;
                 break;
             }
-            os << b;
+            cache[index++] = b;
+            if (index >= BLOCK_SZ) {
+                std::memcpy(&data[BLOCK_SZ * blockIndex], cache, BLOCK_SZ);
+                data.resize(BLOCK_SZ * (++blockIndex + 1));
+                index = 0;
+            }
         }
     }
-
-    data.clear();
-    data = os.str();
+    data.resize(BLOCK_SZ * blockIndex + index);
+    std::memcpy(&data[BLOCK_SZ * blockIndex], cache, index);
 
     return remainingLength() > 0;
 }

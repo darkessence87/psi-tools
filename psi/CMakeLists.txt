@@ -36,9 +36,9 @@ set(TEST_SRC
     tests/HttpParserTests.cpp
     tests/ToolsTests.cpp
 )
-psi_make_tests("Tools" "${TEST_SRC}" "psi-tools;psi-logger;psi-shared")
+psi_make_tests("Tools" "${TEST_SRC}" "psi-tools")
 
-psi_make_examples("1_ToolsExamples" "examples/1_ToolsExamples.cpp" "psi-tools;psi-logger;psi-shared")
-psi_make_examples("2_ByteBufferExamples" "examples/2_ByteBufferExamples.cpp" "psi-tools;psi-logger;psi-shared")
-psi_make_examples("3_EncryptorExamples" "examples/3_EncryptorExamples.cpp" "psi-tools;psi-logger;psi-shared")
-psi_make_examples("4_BigIntegerExamples" "examples/4_BigIntegerExamples.cpp" "psi-tools;psi-logger;psi-shared")
+psi_make_examples("1_ToolsExamples" "examples/1_ToolsExamples.cpp" "psi-tools")
+psi_make_examples("2_ByteBufferExamples" "examples/2_ByteBufferExamples.cpp" "psi-tools")
+psi_make_examples("3_EncryptorExamples" "examples/3_EncryptorExamples.cpp" "psi-tools")
+psi_make_examples("4_BigIntegerExamples" "examples/4_BigIntegerExamples.cpp" "psi-tools")

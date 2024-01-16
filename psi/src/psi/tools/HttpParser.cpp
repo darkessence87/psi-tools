@@ -20,7 +20,8 @@ bool HttpParser::parseHttpChunkedMessage(const ByteBuffer &msg,
 
     msg.readLine(header);
     std::string line;
-    while (msg.readLine(line, {'\n'}) || !line.empty()) {
+    uint8_t delims[1] = {'\n'};
+    while (msg.readLine(line, delims, 1) || !line.empty()) {
         if (line.empty() || line == "\r") {
             break;
         }
@@ -44,7 +45,7 @@ bool HttpParser::parseHttpFragment(const ByteBuffer &fragment, size_t &remaining
         bool isNotSizeLine = false;
         if (remainingSz == MAX_MSG_LENGTH) {
             for (auto c : line) {
-                if (!std::isdigit(c) && (c < 0x61 /*a*/ || c > 0x66 /*f*/)) {
+                if (!std::isxdigit(c)) {
                     isNotSizeLine = true;
                     break;
                 }

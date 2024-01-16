@@ -301,10 +301,11 @@ public:
      * 
      * @param data reference to string data
      * @param delimiters list of delimiters. Default: {0x0a, 0x0d, 0x17}
+     * @param N number of delimiters in list. Default: 0
      * @return true if operation is successful, readIndex is increased by length of string
      * @return false if operation is failed, readIndex is not changed
      */
-    bool readLine(std::string &data, const std::set<uint8_t> &delimiters = {0x0a, 0x0d, 0x17}) const;
+    bool readLine(std::string &data, const uint8_t *delimiters = nullptr, size_t N = 0) const;
 
     /**
      * @brief Read N number of bytes to new ByteBuffer.
