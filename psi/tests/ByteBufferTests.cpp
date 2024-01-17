@@ -702,7 +702,8 @@ TEST(ByteBufferTests, performance)
         []() {
             ByteBuffer buff("cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdc");
             std::string data;
-            while(buff.readLine(data));
+            while (buff.readLine(data))
+                ;
         },
         100000);
 
@@ -732,7 +733,8 @@ TEST(ByteBufferTests, performance)
                 "cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\n"
                 "cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncd");
             std::string data;
-            while(buff.readLine(data));
+            while (buff.readLine(data))
+                ;
         },
         100000);
 
@@ -772,6 +774,191 @@ TEST(ByteBufferTests, performance)
                 "cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncd");
             std::string data;
             buff.readString(data, 2048);
+        },
+        100000);
+
+    TestHelper::timeFn(
+        "asVector small (64 bytes)",
+        []() {
+            ByteBuffer buff("cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdc");
+            buff.asVector();
+        },
+        100000);
+
+    TestHelper::timeFn(
+        "asVector medium (2048 bytes)",
+        []() {
+            ByteBuffer buff(
+                "cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\n"
+                "cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\n"
+                "cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\n"
+                "cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\n"
+                "cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\n"
+                "cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\n"
+                "cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\n"
+                "cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\n"
+                "cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\n"
+                "cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\n"
+                "cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\n"
+                "cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\n"
+                "cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\n"
+                "cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\n"
+                "cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\n"
+                "cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\n"
+                "cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\n"
+                "cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\n"
+                "cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\n"
+                "cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\n"
+                "cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncd");
+            buff.asVector();
+        },
+        100000);
+
+    TestHelper::timeFn(
+        "asHash small (64 bytes)",
+        []() {
+            ByteBuffer buff("cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdc");
+            buff.asHash();
+        },
+        100000);
+
+    TestHelper::timeFn(
+        "asHash medium (2048 bytes)",
+        []() {
+            ByteBuffer buff(
+                "cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\n"
+                "cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\n"
+                "cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\n"
+                "cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\n"
+                "cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\n"
+                "cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\n"
+                "cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\n"
+                "cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\n"
+                "cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\n"
+                "cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\n"
+                "cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\n"
+                "cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\n"
+                "cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\n"
+                "cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\n"
+                "cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\n"
+                "cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\n"
+                "cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\n"
+                "cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\n"
+                "cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\n"
+                "cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\n"
+                "cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncd");
+            buff.asHash();
+        },
+        100000);
+
+    TestHelper::timeFn(
+        "asHexString small (64 bytes)",
+        []() {
+            ByteBuffer buff("cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdc");
+            buff.asHexString();
+        },
+        100000);
+
+    TestHelper::timeFn(
+        "asHexString medium (2048 bytes)",
+        []() {
+            ByteBuffer buff(
+                "cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\n"
+                "cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\n"
+                "cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\n"
+                "cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\n"
+                "cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\n"
+                "cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\n"
+                "cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\n"
+                "cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\n"
+                "cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\n"
+                "cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\n"
+                "cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\n"
+                "cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\n"
+                "cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\n"
+                "cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\n"
+                "cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\n"
+                "cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\n"
+                "cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\n"
+                "cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\n"
+                "cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\n"
+                "cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\n"
+                "cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncd");
+            buff.asHexString();
+        },
+        100000);
+
+    TestHelper::timeFn(
+        "asHexStringFormatted small (64 bytes)",
+        []() {
+            ByteBuffer buff("cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdc");
+            buff.asHexStringFormatted();
+        },
+        100000);
+
+    TestHelper::timeFn(
+        "asHexStringFormatted medium (2048 bytes)",
+        []() {
+            ByteBuffer buff(
+                "cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\n"
+                "cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\n"
+                "cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\n"
+                "cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\n"
+                "cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\n"
+                "cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\n"
+                "cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\n"
+                "cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\n"
+                "cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\n"
+                "cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\n"
+                "cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\n"
+                "cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\n"
+                "cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\n"
+                "cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\n"
+                "cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\n"
+                "cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\n"
+                "cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\n"
+                "cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\n"
+                "cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\n"
+                "cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\n"
+                "cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncd");
+            buff.asHexStringFormatted();
+        },
+        100000);
+
+    TestHelper::timeFn(
+        "asString small (64 bytes)",
+        []() {
+            ByteBuffer buff("cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdc");
+            buff.asString();
+        },
+        100000);
+
+    TestHelper::timeFn(
+        "asString medium (2048 bytes)",
+        []() {
+            ByteBuffer buff(
+                "cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\n"
+                "cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\n"
+                "cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\n"
+                "cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\n"
+                "cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\n"
+                "cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\n"
+                "cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\n"
+                "cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\n"
+                "cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\n"
+                "cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\n"
+                "cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\n"
+                "cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\n"
+                "cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\n"
+                "cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\n"
+                "cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\n"
+                "cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\n"
+                "cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\n"
+                "cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\n"
+                "cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\n"
+                "cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\n"
+                "cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\ncd");
+            buff.asString();
         },
         100000);
 }

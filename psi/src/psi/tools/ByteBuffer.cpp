@@ -42,6 +42,12 @@ ByteBuffer::ByteBuffer(uint8_t *arr, size_t sz)
 {
 }
 
+ByteBuffer::ByteBuffer(const uint8_t *arr, size_t sz)
+    : ByteBuffer(sz)
+{
+    writeArray(arr, sz);
+}
+
 ByteBuffer::ByteBuffer(const std::string &data, bool isHex)
     : m_bufferSz(data.size() / (isHex ? 2 : 1))
     , m_buffer(new uint8_t[m_bufferSz]())
@@ -185,20 +191,17 @@ uint8_t *ByteBuffer::data() const
 const std::vector<uint8_t> ByteBuffer::asVector() const
 {
     std::vector<uint8_t> result;
-
-    for (size_t i = 0; i < m_bufferSz; ++i) {
-        result.emplace_back(m_buffer[i]);
-    }
-
+    result.resize(m_bufferSz);
+    memcpy(&result[0], m_buffer, m_bufferSz);
     return result;
 }
 
 const std::vector<uint64_t> ByteBuffer::asHash() const
 {
-    std::vector<uint64_t> result;
-
     const size_t blocks = m_bufferSz / 8;
     const size_t remain = m_bufferSz % 8;
+    std::vector<uint64_t> result;
+    result.reserve(blocks + (remain ? 1 : 0));
 
     for (size_t i = 0; i < blocks * 8; i += 8) {
         uint64_t v = m_buffer[i];
@@ -222,43 +225,49 @@ const std::vector<uint64_t> ByteBuffer::asHash() const
 
 const std::string ByteBuffer::asHexString() const
 {
-    std::ostringstream os;
-
-    for (size_t i = 0; i < m_bufferSz; ++i) {
-        uint16_t n = m_buffer[i];
-        os << to_hex_string(n);
-    }
-
-    return os.str();
+    return tools::to_hex_string(m_buffer, m_bufferSz);
 }
 
 const std::string ByteBuffer::asHexStringFormatted() const
 {
-    std::ostringstream os;
-    os << "[ ";
+    std::string result;
+    result.resize(m_bufferSz * 3 + 3);
 
+    auto toHex = [](uint8_t c) -> uint8_t {
+        uint8_t r = c & 0xf;
+        if (r <= 0x9) {
+            return r + uint8_t(0x30);
+        }
+        return r + uint8_t(0x57);
+    };
+
+    size_t index = 0;
+    result[index++] = '[';
+    result[index++] = ' ';
     for (size_t i = 0; i < m_bufferSz; ++i) {
-        uint16_t n = m_buffer[i];
-        os << to_hex_string(n) << " ";
+        result[index++] = toHex(m_buffer[i] >> 4);
+        result[index++] = toHex(m_buffer[i]);
+        result[index++] = ' ';
     }
+    result[index++] = ']';
 
-    os << "]";
-
-    return os.str();
+    return result;
 }
 
 const std::string ByteBuffer::asString() const
 {
-    std::ostringstream os;
+    std::string result;
+    result.reserve(m_bufferSz);
 
     for (size_t i = 0; i < m_bufferSz; ++i) {
         uint8_t c = m_buffer[i];
-        if ((c >= 0x20 && c <= 0x7E) || c == '\n' || c == '\t' || c == '\r') {
-            os << m_buffer[i];
+        if ((c >= 0x20 && c <= 0x7e) || c == '\n' || c == '\t' || c == '\r') {
+            result.push_back(c);
         }
     }
+    result.shrink_to_fit();
 
-    return os.str();
+    return result;
 }
 
 size_t ByteBuffer::size() const
@@ -285,7 +294,7 @@ bool ByteBuffer::writeString(const std::string &data)
         return false;
     }
 
-    std::memcpy(&m_buffer[m_writeIndex], &data[0], sz);
+    memcpy(&m_buffer[m_writeIndex], &data[0], sz);
     m_writeIndex += sz;
 
     return true;
@@ -340,7 +349,7 @@ bool ByteBuffer::readString(std::string &data, const size_t N) const
 
     data.clear();
     data.resize(sz);
-    std::memcpy(&data[0], &m_buffer[m_readIndex], sz);
+    memcpy(&data[0], &m_buffer[m_readIndex], sz);
     m_readIndex += sz;
 
     return true;
@@ -380,14 +389,14 @@ bool ByteBuffer::readLine(std::string &data, const uint8_t *delimiters, size_t N
             }
             cache[index++] = b;
             if (index >= BLOCK_SZ) {
-                std::memcpy(&data[BLOCK_SZ * blockIndex], cache, BLOCK_SZ);
+                memcpy(&data[BLOCK_SZ * blockIndex], cache, BLOCK_SZ);
                 data.resize(BLOCK_SZ * (++blockIndex + 1));
                 index = 0;
             }
         }
     }
     data.resize(BLOCK_SZ * blockIndex + index);
-    std::memcpy(&data[BLOCK_SZ * blockIndex], cache, index);
+    memcpy(&data[BLOCK_SZ * blockIndex], cache, index);
 
     return remainingLength() > 0;
 }

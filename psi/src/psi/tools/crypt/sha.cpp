@@ -56,9 +56,8 @@ ByteBuffer sha::padMessage(const ByteBuffer &data)
 
 void sha::prepareMessageSchedule(const uint8_t *block, uint32_t *w)
 {
-    for (size_t i = 0; i < 16; ++i) {
-        w[i] = (uint32_t)block[0] << 24 | (uint32_t)block[1] << 16 | (uint32_t)block[2] << 8 | (uint32_t)block[3];
-        block += 4;
+    for (uint8_t i = 0; i < 16u; ++i) {
+        w[i] = (*block++ << 24) | (*block++ << 16) | (*block++ << 8) | (*block++);
     }
 
     for (uint8_t i = 16; i < 64; ++i) {
@@ -71,24 +70,21 @@ void sha::prepareMessageSchedule(const uint8_t *block, uint32_t *w)
 uint32_t sha::rightRotate(uint32_t v, uint8_t n)
 {
     n %= 32u;
-    return ((v & (0xffffffff >> (32u - n))) << (32u - n)) | (v >> n);
+    return (v << (32u - n)) | (v >> n);
 }
 
 void sha::hashInit(uint32_t h[8u])
 {
-    for (uint8_t i = 0; i < 8u; ++i) {
-        h[i] = H[i];
-    }
+    memcpy(&h[0], &H[0], sizeof(H));
 }
 
 ByteBuffer sha::encode256(const ByteBuffer &data)
 {
     auto paddedData = padMessage(data);
 
-    uint32_t hash[8] = {};
-    memcpy(hash, H, 32);
     uint8_t dataBlock[64] = {};
-
+    uint32_t hash[8] = {};
+    hashInit(hash);
     uint32_t h[8] = {};
     hashInit(h);
 
@@ -140,26 +136,14 @@ ByteBuffer sha::hmac256(const ByteBuffer &key, const ByteBuffer &data)
         key.readToByteBuffer(paddedKey, key.size());
     }
 
-    auto k = paddedKey.data();
-    ByteBuffer iKeyPad(64u);
-    iKeyPad.write(INN_PAD);
-    ByteBuffer oKeyPad(64u);
-    oKeyPad.write(OUT_PAD);
+    ByteBuffer iKeyPad(INN_PAD, 64u);
+    ByteBuffer oKeyPad(OUT_PAD, 64u);
     for (uint8_t i = 0; i < 64u; ++i) {
-        iKeyPad.data()[i] ^= k[i];
-        oKeyPad.data()[i] ^= k[i];
+        iKeyPad.data()[i] ^= paddedKey.data()[i];
+        oKeyPad.data()[i] ^= paddedKey.data()[i];
     }
 
-    ByteBuffer ihash(64u + data.size());
-    iKeyPad.readToByteBuffer(ihash, 64u);
-    data.readToByteBuffer(ihash, data.size());
-    ihash = encode256(ihash);
-
-    ByteBuffer hash(64u + 32u);
-    oKeyPad.readToByteBuffer(hash, 64u);
-    ihash.readToByteBuffer(hash, 32u);
-
-    return encode256(hash);
+    return encode256(oKeyPad + encode256(iKeyPad + data));
 }
 
 ByteBuffer sha::hkdf256Extract(const ByteBuffer &kMat, const ByteBuffer &seed)

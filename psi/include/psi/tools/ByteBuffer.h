@@ -47,6 +47,14 @@ public:
     explicit ByteBuffer(uint8_t *arr, size_t sz);
 
     /**
+     * @brief Construct a new ByteBuffer object by copying an existing array into ByteBuffer.
+     * 
+     * @param arr existing array
+     * @param sz size of existing array
+     */
+    explicit ByteBuffer(const uint8_t *arr, size_t sz);
+
+    /**
      * @brief Construct a new ByteBuffer object by string
      * 
      * @param data string

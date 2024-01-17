@@ -6,6 +6,7 @@
 
 using namespace psi::tools;
 using namespace psi::tools::crypt;
+using namespace psi::test;
 
 TEST(sha_Tests, padMessage)
 {
@@ -229,4 +230,49 @@ TEST(sha_Tests, hkdf256)
            "",
            42,
            "8da4e775a563c18f715f802a063c5a31b8a11f5c5ee1879ec3454e5f3c738d2d9d201395faa4b61a96c8");
+}
+
+TEST(sha_Tests, performance)
+{
+    TestHelper::timeFn(
+        "hashInit",
+        []() {
+            uint32_t h[8] = {};
+            sha::hashInit(h);
+        },
+        100000);
+
+    TestHelper::timeFn(
+        "prepareMessageSchedule",
+        []() {
+            uint8_t dataBlock[64] = {};
+            uint32_t w[64] = {};
+            sha::prepareMessageSchedule(dataBlock, w);
+        },
+        100000);
+
+    TestHelper::timeFn(
+        "hmac256",
+        []() {
+            ByteBuffer key(32);
+            ByteBuffer data(32);
+            sha::hmac256(key, data);
+        },
+        100000);
+
+    TestHelper::timeFn(
+        "encode256 small (32 bytes)",
+        []() {
+            ByteBuffer data(32);
+            sha::encode256(data);
+        },
+        100000);
+
+    TestHelper::timeFn(
+        "encode256 medium (2048 bytes)",
+        []() {
+            ByteBuffer data(2048);
+            sha::encode256(data);
+        },
+        100000);
 }

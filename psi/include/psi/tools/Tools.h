@@ -21,12 +21,24 @@ namespace psi::tools {
  */
 inline std::string to_hex_string(uint8_t *buffer, size_t sz) noexcept
 {
-    std::ostringstream os;
-    os << std::hex << std::setfill('0');
+    std::string result;
+    result.resize(sz * 2);
+
+    auto toHex = [](uint8_t c) -> uint8_t {
+        uint8_t r = c & 0xf;
+        if (r <= 0x9) {
+            return r + uint8_t(0x30);
+        }
+        return r + uint8_t(0x57);
+    };
+
+    size_t index = 0;
     for (size_t i = 0; i < sz; ++i) {
-        os << std::setw(2) << uint16_t(buffer[i]) << " ";
+        result[index++] = toHex(buffer[i] >> 4);
+        result[index++] = toHex(buffer[i]);
     }
-    return os.str();
+
+    return result;
 }
 
 /**
@@ -37,9 +49,32 @@ inline std::string to_hex_string(uint8_t *buffer, size_t sz) noexcept
  */
 inline std::string to_hex_string(uint64_t val) noexcept
 {
-    std::ostringstream os;
-    os << std::setfill('0') << std::setw(2) << std::hex << val;
-    return os.str();
+    std::string result;
+    result.reserve(16);
+
+    auto toHex = [](uint8_t c) -> uint8_t {
+        uint8_t r = c & 0xf;
+        if (r <= 0x9) {
+            return r + uint8_t(0x30);
+        }
+        return r + uint8_t(0x57);
+    };
+
+    bool isLeadingZero = true;
+    for (int8_t i = 7; i >= 0; --i) {
+        auto v1 = toHex(uint8_t(val >> (i * 8 + 4)));
+        auto v2 = toHex(uint8_t(val >> (i * 8)));
+        if (isLeadingZero) {
+            isLeadingZero = v1 == 0x30 && v2 == 0x30;
+        }
+        if (!isLeadingZero) {
+            result.push_back(v1);
+            result.push_back(v2);
+        }
+    }
+
+    result.shrink_to_fit();
+    return result;
 }
 
 /**
