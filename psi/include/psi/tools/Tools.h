@@ -234,7 +234,14 @@ void convertToSyncCall(std::function<void(std::function<void(Arg)>)> fn, Arg &ar
 {
     std::promise<Arg> p;
     std::future<Arg> f = p.get_future();
-    auto cb = [&p](Arg res) { p.set_value(res); };
+    auto validator = std::make_shared<bool>(false);
+    auto cb = [&p, validator](Arg res) {
+        if (!validator || *validator) {
+            return;
+        }
+        *validator = true;
+        p.set_value(res);
+    };
     fn(cb);
 
     std::future_status callStatus = f.wait_for(std::chrono::seconds(timeout));
@@ -244,6 +251,7 @@ void convertToSyncCall(std::function<void(std::function<void(Arg)>)> fn, Arg &ar
     } else {
         arg = f.get();
     }
+    *validator = true;
 }
 
 /**
