@@ -18,6 +18,20 @@ endif()
 
 message("Build dir: ${BUILD_DIR}")
 
+# tests
+if(NOT EXISTS ${PSI_BUILD_TESTS})
+    set(PSI_BUILD_TESTS true CACHE INTERNAL false)
+endif()
+
+message("PSI_BUILD_TESTS: ${PSI_BUILD_TESTS}")
+
+# examples
+if(NOT EXISTS ${PSI_BUILD_EXAMPLES})
+    set(PSI_BUILD_EXAMPLES true CACHE INTERNAL false)
+endif()
+
+message("PSI_BUILD_EXAMPLES: ${PSI_BUILD_EXAMPLES}")
+
 # create output folder
 if(NOT EXISTS ${BUILD_OUT})
     set(BUILD_OUT ${BUILD_DIR}/bin/${CMAKE_BUILD_TYPE})
@@ -69,10 +83,11 @@ if(NOT EXISTS add_psi_dependency)
             set(PSI_DEP_LIBS "${PSI_DEP_LIBS};psi-${name}" PARENT_SCOPE)
         else()
             if(${is_dependent} STREQUAL "yes")
-                set(PSI_BUILD_TESTS false CACHE INTERNAL false)
-                set(PSI_BUILD_EXAMPLES false CACHE INTERNAL false)
+                set(PSI_BUILD_TESTS false)
+                set(PSI_BUILD_EXAMPLES false)
                 message("configuring submodule [psi-${name}]... ${dep_path}")
                 add_subdirectory(${dep_path})
+                set(PSI_DEP_LIBS "${PSI_DEP_LIBS};psi-${name}" PARENT_SCOPE)
             endif()
         endif()
 
