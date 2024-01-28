@@ -1,0 +1,3 @@
+[submodule "3rdparty/psi-gtests"]
+	path = 3rdparty/psi-gtests
+	url = https://github.com/darkessence87/psi-gtests.git
