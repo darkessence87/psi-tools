@@ -10,6 +10,7 @@ set (SOURCES
     src/psi/tools/crypt/sha.cpp
     src/psi/tools/crypt/x25519.cpp
     src/psi/tools/BigInteger.cpp
+    src/psi/tools/BitSet.cpp
     src/psi/tools/ByteBuffer.cpp
     src/psi/tools/HttpParser.cpp
     src/psi/tools/Encryptor.cpp
@@ -25,6 +26,7 @@ set(TEST_SRC
     tests/crypt/sha_Tests.cpp
     tests/crypt/x25519_Tests.cpp
     tests/BigIntegerTests.cpp
+    tests/BitSetTests.cpp
     tests/ByteBufferTests.cpp
     tests/EncryptorTests.cpp
     tests/HttpParserTests.cpp
