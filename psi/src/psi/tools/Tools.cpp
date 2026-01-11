@@ -4,6 +4,8 @@
 
 #include "psi/tools/Tools.h"
 
+#include <chrono>
+
 namespace psi::tools {
 
 std::string wstring_to_utf8(const std::wstring &str) noexcept

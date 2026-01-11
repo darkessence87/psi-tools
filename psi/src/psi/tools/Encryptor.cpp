@@ -1,5 +1,7 @@
 #include "psi/tools/Encryptor.h"
 
+#include <chrono>
+
 #include "crypt/aes.h"
 #include "crypt/aes_gcm.h"
 #include "crypt/base64.h"

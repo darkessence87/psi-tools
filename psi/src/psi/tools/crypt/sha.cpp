@@ -57,7 +57,11 @@ ByteBuffer sha::padMessage(const ByteBuffer &data)
 void sha::prepareMessageSchedule(const uint8_t *block, uint32_t *w)
 {
     for (uint8_t i = 0; i < 16u; ++i) {
-        w[i] = (*block++ << 24) | (*block++ << 16) | (*block++ << 8) | (*block++);
+        uint32_t a = *block++ << 24;
+        uint32_t b = *block++ << 16;
+        uint32_t c = *block++ << 8;
+        uint32_t d = *block++;
+        w[i] = a | b | c | d;
     }
 
     for (uint8_t i = 16; i < 64; ++i) {
