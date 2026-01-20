@@ -1,6 +1,5 @@
 #pragma once
 
-#include <set>
 #include <stdint.h>
 #include <string>
 #include <vector>
@@ -14,7 +13,7 @@ namespace psi::tools {
  * Automatically manages memory. Provides interface to read/write/convert operations on a byte buffer.
  * 
  */
-class ByteBuffer
+class ByteBuffer final
 {
 public:
     /**
@@ -74,7 +73,7 @@ public:
      * @brief Destroy the ByteBuffer object. Free's memory.
      * 
      */
-    virtual ~ByteBuffer();
+    ~ByteBuffer();
 
     /**
      * @brief Replace existing ByteBuffer object with provided ByteBuffer object.
@@ -145,7 +144,7 @@ public:
             return false;
         }
 
-        memcpy(m_buffer + m_writeIndex, &data, sz);
+        std::memcpy(m_buffer + m_writeIndex, &data, sz);
         m_writeIndex += sz;
 
         return true;
@@ -182,7 +181,7 @@ public:
             return false;
         }
 
-        memcpy(&data, m_buffer + m_readIndex, sz);
+        std::memcpy(&data, m_buffer + m_readIndex, sz);
         m_readIndex += sz;
 
         return true;
@@ -225,7 +224,7 @@ public:
             return false;
         }
 
-        memcpy(m_buffer + m_writeIndex, data, sz);
+        std::memcpy(m_buffer + m_writeIndex, data, sz);
         m_writeIndex += sz;
 
         return true;
@@ -248,7 +247,7 @@ public:
             return false;
         }
 
-        memcpy(&data, m_buffer + m_readIndex, sz);
+        std::memcpy(&data, m_buffer + m_readIndex, sz);
         m_readIndex += sz;
 
         return true;
@@ -270,7 +269,7 @@ public:
             return false;
         }
 
-        memcpy(data, m_buffer + m_readIndex, sz);
+        std::memcpy(data, m_buffer + m_readIndex, sz);
         m_readIndex += sz;
 
         return true;

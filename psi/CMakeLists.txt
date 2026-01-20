@@ -17,7 +17,10 @@ set (SOURCES
     src/psi/tools/Tools.cpp
 )
 
-add_library(psi-tools ${SOURCES})
+set (target_lib "psi-tools")
+
+add_library(${target_lib} ${SOURCES})
+psi_config_target(${target_lib} FALSE)
 
 set(TEST_SRC
     tests/crypt/aes_gcm_Tests.cpp
@@ -32,9 +35,9 @@ set(TEST_SRC
     tests/HttpParserTests.cpp
     tests/ToolsTests.cpp
 )
-psi_make_tests("Tools" "${TEST_SRC}" "psi-tools")
+psi_make_tests("Tools" "${TEST_SRC}" "${target_lib}")
 
-psi_make_examples("1_ToolsExamples" "examples/1_ToolsExamples.cpp" "psi-tools")
-psi_make_examples("2_ByteBufferExamples" "examples/2_ByteBufferExamples.cpp" "psi-tools")
-psi_make_examples("3_EncryptorExamples" "examples/3_EncryptorExamples.cpp" "psi-tools")
-psi_make_examples("4_BigIntegerExamples" "examples/4_BigIntegerExamples.cpp" "psi-tools")
+psi_make_examples("1_ToolsExamples" "examples/1_ToolsExamples.cpp" "${target_lib}")
+psi_make_examples("2_ByteBufferExamples" "examples/2_ByteBufferExamples.cpp" "${target_lib}")
+psi_make_examples("3_EncryptorExamples" "examples/3_EncryptorExamples.cpp" "${target_lib}")
+psi_make_examples("4_BigIntegerExamples" "examples/4_BigIntegerExamples.cpp" "${target_lib}")

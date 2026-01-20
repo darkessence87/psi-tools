@@ -121,11 +121,17 @@ if(NOT COMMAND psi_make_tests)
         endif()
 
         include_directories(${3rdPARTY_DIR}/psi-gtests/include)
-        set(test_libs "gmock;gmock_main;gtest;gtest_main")
-        link_directories(${3rdPARTY_DIR}/psi-gtests/lib/${SUB_DIR_LIBS})
+        set(test_libs "gmock_main;gmock;gtest")
+        if(ENABLE_ASAN_UBSAN)
+            set(PSI_DEP_LIBS "${PSI_DEP_LIBS};clang_rt.asan_dynamic-x86_64;clang_rt.asan_dynamic_runtime_thunk-x86_64")
+            link_directories(${3rdPARTY_DIR}/psi-gtests/lib/${SUB_DIR_LIBS_RELEASE_ASAN_UBSAN})
+        else()
+            link_directories(${3rdPARTY_DIR}/psi-gtests/lib/${SUB_DIR_LIBS_RELEASE})
+        endif()
 
         set(fileName PSI_TEST_${name})
         add_executable(${fileName} ${PROJECT_SOURCE_DIR}/tests/EntryPoint.cpp ${src})
+        psi_config_target(${fileName})
         target_link_libraries(${fileName} ${libs} ${test_libs} ${PSI_DEP_LIBS})
     endfunction()
 endif()
@@ -138,6 +144,23 @@ if(NOT COMMAND psi_make_examples)
 
         set(fileName PSI_EXAMPLE_${name})
         add_executable(${fileName} ${src})
+        psi_config_target(${fileName})
+        if(ENABLE_ASAN_UBSAN)
+            set(PSI_DEP_LIBS "${PSI_DEP_LIBS};clang_rt.asan_dynamic-x86_64;clang_rt.asan_dynamic_runtime_thunk-x86_64")
+        endif()
         target_link_libraries(${fileName} ${libs} ${PSI_DEP_LIBS})
+    endfunction()
+endif()
+
+if(NOT COMMAND psi_config_target)
+    function(psi_config_target target_name)
+        target_compile_features(${target_name} PUBLIC cxx_std_20)
+        if(ENABLE_ASAN_UBSAN)
+            target_compile_options(${target_name} PRIVATE
+                $<$<CONFIG:Debug>:/fsanitize=address>
+                $<$<CONFIG:Debug>:-fsanitize=undefined>
+                $<$<CONFIG:Debug>:/RTC->
+            )
+        endif()
     endfunction()
 endif()

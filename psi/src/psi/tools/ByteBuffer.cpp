@@ -65,7 +65,7 @@ ByteBuffer::ByteBuffer(const ByteBuffer &bb)
     , m_readIndex(bb.m_readIndex)
     , m_writeIndex(bb.m_writeIndex)
 {
-    memcpy(m_buffer, bb.m_buffer, m_bufferSz);
+    std::memcpy(m_buffer, bb.m_buffer, m_bufferSz);
 }
 
 ByteBuffer::~ByteBuffer()
@@ -89,7 +89,7 @@ ByteBuffer &ByteBuffer::operator=(const ByteBuffer &bb)
 
     m_bufferSz = bb.size();
     m_buffer = new uint8_t[m_bufferSz]();
-    memcpy(m_buffer, bb.m_buffer, m_bufferSz);
+    std::memcpy(m_buffer, bb.m_buffer, m_bufferSz);
 
     m_readIndex = bb.m_readIndex;
     m_writeIndex = bb.m_writeIndex;
@@ -103,7 +103,7 @@ ByteBuffer &ByteBuffer::operator+=(const ByteBuffer &bb)
     auto newBuffer = new uint8_t[newBufferSz]();
 
     if (m_buffer) {
-        memcpy(newBuffer, m_buffer, m_bufferSz);
+        std::memcpy(newBuffer, m_buffer, m_bufferSz);
 
         delete[] m_buffer;
         m_buffer = nullptr;
@@ -192,7 +192,7 @@ const std::vector<uint8_t> ByteBuffer::asVector() const
 {
     std::vector<uint8_t> result;
     result.resize(m_bufferSz);
-    memcpy(&result[0], m_buffer, m_bufferSz);
+    std::memcpy(&result[0], m_buffer, m_bufferSz);
     return result;
 }
 
@@ -294,7 +294,7 @@ bool ByteBuffer::writeString(const std::string &data)
         return false;
     }
 
-    memcpy(&m_buffer[m_writeIndex], &data[0], sz);
+    std::memcpy(&m_buffer[m_writeIndex], &data[0], sz);
     m_writeIndex += sz;
 
     return true;
@@ -315,7 +315,7 @@ bool ByteBuffer::writeHexString(const std::string &data)
     }
 
     // specific 'stoul' is faster than standart for hex digits
-    auto stoul = [](uint8_t *data) -> uint8_t {
+    auto stoul = [](uint8_t data1, uint8_t data2) -> uint8_t {
         auto get = [](uint8_t c) -> uint8_t {
             if (c >= 0x30 && c <= 0x39) {
                 return c - uint8_t(0x30);
@@ -326,11 +326,11 @@ bool ByteBuffer::writeHexString(const std::string &data)
             }
             throw std::invalid_argument("Invalid argument provided: is not hex-digit");
         };
-        return (get(data[0]) << 4) | get(data[1]);
+        return (get(data1) << 4) | get(data2);
     };
 
     for (size_t i = 0; i < data.size(); i += 2) {
-        const uint8_t v = stoul((uint8_t *)&data[i]);
+        const uint8_t v = stoul(data[i], data[i+1]);
         m_buffer[m_writeIndex] = v;
         ++m_writeIndex;
     }
@@ -349,7 +349,7 @@ bool ByteBuffer::readString(std::string &data, const size_t N) const
 
     data.clear();
     data.resize(sz);
-    memcpy(&data[0], &m_buffer[m_readIndex], sz);
+    std::memcpy(&data[0], &m_buffer[m_readIndex], sz);
     m_readIndex += sz;
 
     return true;
@@ -357,7 +357,7 @@ bool ByteBuffer::readString(std::string &data, const size_t N) const
 
 bool ByteBuffer::readLine(std::string &data, const uint8_t *delimiters, size_t N) const
 {
-    uint8_t delims[3] = {0x0a, 0x0d, 0x17};
+    constexpr uint8_t delims[3] = {0x0a, 0x0d, 0x17};
     if (!delimiters) {
         delimiters = delims;
         N = 3;
@@ -389,14 +389,14 @@ bool ByteBuffer::readLine(std::string &data, const uint8_t *delimiters, size_t N
             }
             cache[index++] = b;
             if (index >= BLOCK_SZ) {
-                memcpy(&data[BLOCK_SZ * blockIndex], cache, BLOCK_SZ);
+                std::memcpy(&data[BLOCK_SZ * blockIndex], cache, BLOCK_SZ);
                 data.resize(BLOCK_SZ * (++blockIndex + 1));
                 index = 0;
             }
         }
     }
     data.resize(BLOCK_SZ * blockIndex + index);
-    memcpy(&data[BLOCK_SZ * blockIndex], cache, index);
+    std::memcpy(&data[BLOCK_SZ * blockIndex], cache, index);
 
     return remainingLength() > 0;
 }
@@ -411,7 +411,7 @@ ByteBuffer ByteBuffer::readToByteBuffer(const size_t N) const
     }
 
     uint8_t *temp = new uint8_t[sz]();
-    memcpy(temp, &m_buffer[m_readIndex], sz);
+    std::memcpy(temp, &m_buffer[m_readIndex], sz);
     m_readIndex += sz;
 
     return ByteBuffer(std::move(*temp), sz);

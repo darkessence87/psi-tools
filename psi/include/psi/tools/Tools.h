@@ -110,7 +110,7 @@ inline std::vector<std::pair<std::string, std::string>> parse_to_map(const std::
         if (pos != std::string::npos) {
             const auto tokenName = tokenLine.substr(0, pos);
             const auto tokenValue = tokenLine.substr(pos + 1, tokenLine.size());
-            tokens.emplace_back(std::pair {tokenName, tokenValue});
+            tokens.emplace_back(std::pair<std::string,std::string> {tokenName, tokenValue});
         }
     }
     return tokens;
