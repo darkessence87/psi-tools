@@ -1,6 +1,5 @@
-#include "TestHelper.h"
-#include <gmock/gmock.h>
-#include <gtest/gtest.h>
+#include "psi/test/TestHelper.h"
+#include "psi/test/psi_mock.h"
 
 #include <iostream>
 #include <set>
@@ -18,7 +17,7 @@ TEST(EncryptorTests, encryptAes128)
     key.writeHexString("000102030405060708090a0b0c0d0e0f");
 
     {
-        SCOPED_TRACE("// case 1. two full blocks + one non-full block");
+        // SCOPED_TRACE("// case 1. two full blocks + one non-full block");
 
         ByteBuffer data(47u);
         data.writeHexString(
@@ -30,7 +29,7 @@ TEST(EncryptorTests, encryptAes128)
     }
 
     {
-        SCOPED_TRACE("// case 2. one non-full block");
+        // SCOPED_TRACE("// case 2. one non-full block");
 
         ByteBuffer data(15u);
         data.writeHexString("00112233445566778899aabbccddee");
@@ -40,7 +39,7 @@ TEST(EncryptorTests, encryptAes128)
     }
 
     {
-        SCOPED_TRACE("// case 3. one full block");
+        // SCOPED_TRACE("// case 3. one full block");
 
         ByteBuffer data(16u);
         data.writeHexString("00112233445566778899aabbccddeeff");
@@ -56,7 +55,7 @@ TEST(EncryptorTests, encryptAes256)
     key.writeHexString("000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f");
 
     {
-        SCOPED_TRACE("// case 1. two full blocks + one non-full block");
+        // SCOPED_TRACE("// case 1. two full blocks + one non-full block");
 
         ByteBuffer data(47u);
         data.writeHexString(
@@ -68,7 +67,7 @@ TEST(EncryptorTests, encryptAes256)
     }
 
     {
-        SCOPED_TRACE("// case 2. one non-full block");
+        // SCOPED_TRACE("// case 2. one non-full block");
 
         ByteBuffer data(15u);
         data.writeHexString("00112233445566778899aabbccddee");
@@ -78,7 +77,7 @@ TEST(EncryptorTests, encryptAes256)
     }
 
     {
-        SCOPED_TRACE("// case 3. one full block");
+        // SCOPED_TRACE("// case 3. one full block");
 
         ByteBuffer data(16u);
         data.writeHexString("00112233445566778899aabbccddeeff");
@@ -94,7 +93,7 @@ TEST(EncryptorTests, decryptAes256)
     key.writeHexString("000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f");
 
     {
-        SCOPED_TRACE("// case 1. two full blocks + one non-full block");
+        // SCOPED_TRACE("// case 1. two full blocks + one non-full block");
 
         ByteBuffer data(49u);
         data.writeHexString(
@@ -106,7 +105,7 @@ TEST(EncryptorTests, decryptAes256)
     }
 
     {
-        SCOPED_TRACE("// case 2. one non-full block");
+        // SCOPED_TRACE("// case 2. one non-full block");
 
         ByteBuffer data(17u);
         data.writeHexString("94501d9b894874a1f7feae67d905c45b0f");
@@ -116,7 +115,7 @@ TEST(EncryptorTests, decryptAes256)
     }
 
     {
-        SCOPED_TRACE("// case 3. one full block");
+        // SCOPED_TRACE("// case 3. one full block");
 
         ByteBuffer data(16u);
         data.writeHexString("8ea2b7ca516745bfeafc49904b496089");
@@ -136,10 +135,10 @@ TEST(EncryptorTests, EncryptionDecryption_AES_128)
         key.writeHexString(hexKey);
 
         auto encryptedMessage = Encryptor::encryptAes128(message, key);
-        ASSERT_TRUE(encryptedMessage.size() > 0);
+        ASSERT_GE(encryptedMessage.size(), size_t {0});
 
         auto decryptedMessage = Encryptor::decryptAes128(encryptedMessage, key);
-        ASSERT_TRUE(decryptedMessage.size() > 0);
+        ASSERT_GE(decryptedMessage.size(), size_t {0});
         EXPECT_EQ(decryptedMessage.asHexString(), hexMessage);
     };
 
@@ -158,11 +157,11 @@ TEST(EncryptorTests, EncryptionDecryption_AES_256)
         key.writeHexString(hexKey);
 
         auto encryptedMessage = Encryptor::encryptAes256(message, key);
-        ASSERT_TRUE(encryptedMessage.size() > 0);
+        ASSERT_GE(encryptedMessage.size(), size_t {0});
         EXPECT_EQ(encryptedMessage.asHexString(), expectedHexCipher);
 
         auto decryptedMessage = Encryptor::decryptAes256(encryptedMessage, key);
-        ASSERT_TRUE(decryptedMessage.size() > 0);
+        ASSERT_GE(decryptedMessage.size(), size_t {0});
         EXPECT_EQ(decryptedMessage.asHexString(), hexMessage);
     };
 
@@ -189,11 +188,11 @@ TEST(EncryptorTests, BigDataEncryptionDecryption_AES_256)
         key.writeHexString(hexKey);
 
         auto encryptedMessage = Encryptor::encryptAes256(message, key);
-        ASSERT_TRUE(encryptedMessage.size() > 0);
+        ASSERT_GE(encryptedMessage.size(), size_t {0});
         EXPECT_EQ(encryptedMessage.asHexString(), expectedHexCipher);
 
         auto decryptedMessage = Encryptor::decryptAes256(encryptedMessage, key);
-        ASSERT_TRUE(decryptedMessage.size() > 0);
+        ASSERT_GE(decryptedMessage.size(), size_t {0});
         EXPECT_EQ(decryptedMessage.asHexString(), hexMessage);
     };
 
@@ -221,10 +220,10 @@ TEST(EncryptorTests, NonStringDataEncryptionDecryption_AES_256)
         key.writeHexString(hexKey);
 
         auto encryptedMessage = Encryptor::encryptAes256(message, key);
-        ASSERT_TRUE(encryptedMessage.size() > 0);
+        ASSERT_GE(encryptedMessage.size(), size_t {0});
 
         auto decryptedMessage = Encryptor::decryptAes256(encryptedMessage, key);
-        ASSERT_TRUE(decryptedMessage.size() > 0);
+        ASSERT_GE(decryptedMessage.size(), size_t {0});
 
         EXPECT_EQ(std::string(msg), decryptedMessage.asString());
     };
@@ -285,7 +284,7 @@ TEST(EncryptorTests, DISABLED_generateSessionKey)
         auto itr = keys.emplace(key.asHash());
         // if insertion failed that means that session key is NOT unique
         if (i != 0) {
-            ASSERT_TRUE(itr.second);
+            ASSERT_EQ(itr.second, true);
 
             if (i == 1) {
                 std::cout << key.asHexStringFormatted() << std::endl;

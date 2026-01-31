@@ -1,9 +1,9 @@
-#include <gmock/gmock.h>
-#include <gtest/gtest.h>
+#include "psi/test/psi_mock.h"
 
 #include "psi/tools/HttpParser.h"
 
 using namespace psi::tools;
+using namespace psi::test;
 
 TEST(HttpParserTests, parseHttpChunkedMessage)
 {
@@ -17,9 +17,9 @@ TEST(HttpParserTests, parseHttpChunkedMessage)
     auto doTest = [&](const auto &testCaseName,
                       const auto &msg,
                       const auto &expectedData,
-                      const auto &expectedRemainingSz,
+                      const size_t expectedRemainingSz,
                       const auto &expectedEndData) {
-        SCOPED_TRACE(testCaseName);
+        // SCOPED_TRACE(testCaseName);
 
         const ByteBuffer request(msg);
 
@@ -70,9 +70,9 @@ TEST(HttpParserTests, parseHttpFragment)
                      const auto &fragmentData,
                      const auto &originRemainingSz,
                      const auto &expectedData,
-                     const auto &expectedRemainingSz,
+                     const size_t expectedRemainingSz,
                      const auto &expectedEndData) {
-        SCOPED_TRACE(testCaseName);
+        // SCOPED_TRACE(testCaseName);
 
         const ByteBuffer fragment(fragmentData);
         size_t remainingSz = originRemainingSz;
@@ -133,7 +133,7 @@ TEST(HttpParserTests, parseHttpFragment)
 TEST(HttpParserTests, skipToHttpData)
 {
     auto doTest = [&](const auto &testCaseName, const auto &msg, const auto &expectedMsg) {
-        SCOPED_TRACE(testCaseName);
+        // SCOPED_TRACE(testCaseName);
 
         const ByteBuffer request(msg);
         const ByteBuffer expected(expectedMsg);

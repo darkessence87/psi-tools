@@ -1,0 +1,1 @@
+add_psi_dependency(test)

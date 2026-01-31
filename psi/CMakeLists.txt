@@ -20,7 +20,7 @@ set (SOURCES
 set (target_lib "psi-tools")
 
 add_library(${target_lib} ${SOURCES})
-psi_config_target(${target_lib} FALSE)
+psi_config_target(${target_lib})
 
 set(TEST_SRC
     tests/crypt/aes_gcm_Tests.cpp
@@ -28,12 +28,12 @@ set(TEST_SRC
     tests/crypt/base64_Tests.cpp
     tests/crypt/sha_Tests.cpp
     tests/crypt/x25519_Tests.cpp
-    tests/BigIntegerTests.cpp
-    tests/BitSetTests.cpp
-    tests/ByteBufferTests.cpp
-    tests/EncryptorTests.cpp
-    tests/HttpParserTests.cpp
-    tests/ToolsTests.cpp
+    tests/BigInteger_Tests.cpp
+    tests/BitSet_Tests.cpp
+    tests/ByteBuffer_Tests.cpp
+    tests/Encryptor_Tests.cpp
+    tests/HttpParser_Tests.cpp
+    tests/Tools_Tests.cpp
 )
 psi_make_tests("Tools" "${TEST_SRC}" "${target_lib}")
 

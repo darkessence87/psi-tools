@@ -1,6 +1,8 @@
 #include "psi/tools/ByteBuffer.h"
 #include "psi/tools/Tools.h"
 
+#include <array>
+
 #ifdef PSI_LOGGER
 #include "psi/logger/Logger.h"
 #else
@@ -65,7 +67,7 @@ ByteBuffer::ByteBuffer(const ByteBuffer &bb)
     , m_readIndex(bb.m_readIndex)
     , m_writeIndex(bb.m_writeIndex)
 {
-    std::memcpy(m_buffer, bb.m_buffer, m_bufferSz);
+    mem_copy(m_buffer, 0, bb.m_buffer, 0, m_bufferSz);
 }
 
 ByteBuffer::~ByteBuffer()
@@ -89,7 +91,7 @@ ByteBuffer &ByteBuffer::operator=(const ByteBuffer &bb)
 
     m_bufferSz = bb.size();
     m_buffer = new uint8_t[m_bufferSz]();
-    std::memcpy(m_buffer, bb.m_buffer, m_bufferSz);
+    mem_copy(m_buffer, 0, bb.m_buffer, 0, m_bufferSz);
 
     m_readIndex = bb.m_readIndex;
     m_writeIndex = bb.m_writeIndex;
@@ -103,7 +105,7 @@ ByteBuffer &ByteBuffer::operator+=(const ByteBuffer &bb)
     auto newBuffer = new uint8_t[newBufferSz]();
 
     if (m_buffer) {
-        std::memcpy(newBuffer, m_buffer, m_bufferSz);
+        mem_copy(newBuffer, 0, m_buffer, 0, m_bufferSz);
 
         delete[] m_buffer;
         m_buffer = nullptr;
@@ -130,7 +132,10 @@ ByteBuffer ByteBuffer::operator+(const ByteBuffer &bb) const
 
 void ByteBuffer::clear()
 {
-    memset(m_buffer, 0, m_bufferSz);
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunsafe-buffer-usage"
+    std::memset(m_buffer, 0, m_bufferSz);
+#pragma clang diagnostic pop
     reset();
 }
 
@@ -176,7 +181,13 @@ bool ByteBuffer::skipWrite(const size_t N) const
 
 uint8_t ByteBuffer::at(const size_t pos) const
 {
+    if (pos >= m_bufferSz) {
+        return '\0';
+    }
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunsafe-buffer-usage"
     return m_buffer[pos];
+#pragma clang diagnostic pop
 }
 
 uint8_t *ByteBuffer::data() const
@@ -188,84 +199,88 @@ uint8_t *ByteBuffer::data() const
     return m_buffer;
 }
 
-const std::vector<uint8_t> ByteBuffer::asVector() const
+std::vector<uint8_t> ByteBuffer::asVector() const
 {
     std::vector<uint8_t> result;
     result.resize(m_bufferSz);
-    std::memcpy(&result[0], m_buffer, m_bufferSz);
+    mem_copy(&result[0], 0, m_buffer, 0, m_bufferSz);
     return result;
 }
 
-const std::vector<uint64_t> ByteBuffer::asHash() const
+std::vector<uint64_t> ByteBuffer::asHash() const
 {
     const size_t blocks = m_bufferSz / 8;
     const size_t remain = m_bufferSz % 8;
     std::vector<uint64_t> result;
     result.reserve(blocks + (remain ? 1 : 0));
 
-    for (size_t i = 0; i < blocks * 8; i += 8) {
-        uint64_t v = m_buffer[i];
-        for (uint8_t k = 1; k < 8; ++k) {
-            v |= (uint64_t)m_buffer[i + k] << (8 * k);
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunsafe-buffer-usage"
+    const uint8_t *ptr = m_buffer;
+
+    for (size_t b = 0; b < blocks; ++b) {
+        uint64_t v = 0;
+        for (uint8_t k = 0; k < 8; ++k) {
+            v |= uint64_t(ptr[k]) << (8 * k);
         }
         result.emplace_back(v);
+        ptr += 8;
     }
 
     if (remain) {
-        const size_t baseIndex = blocks * 8;
-        uint64_t v = m_buffer[baseIndex];
+        uint64_t v = 0;
         for (size_t i = 0; i < remain; ++i) {
-            v |= (uint64_t)m_buffer[baseIndex + i] << (8 * i);
+            v |= uint64_t(ptr[i]) << (8 * i);
         }
         result.emplace_back(v);
     }
+#pragma clang diagnostic pop
 
     return result;
 }
 
-const std::string ByteBuffer::asHexString() const
+std::string ByteBuffer::asHexString() const
 {
     return tools::to_hex_string(m_buffer, m_bufferSz);
 }
 
-const std::string ByteBuffer::asHexStringFormatted() const
+std::string ByteBuffer::asHexStringFormatted() const
 {
     std::string result;
     result.resize(m_bufferSz * 3 + 3);
 
-    auto toHex = [](uint8_t c) -> uint8_t {
-        uint8_t r = c & 0xf;
-        if (r <= 0x9) {
-            return r + uint8_t(0x30);
-        }
-        return r + uint8_t(0x57);
-    };
-
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunsafe-buffer-usage"
+    char *dst = result.data();
     size_t index = 0;
-    result[index++] = '[';
-    result[index++] = ' ';
+    dst[index++] = '[';
+    dst[index++] = ' ';
     for (size_t i = 0; i < m_bufferSz; ++i) {
-        result[index++] = toHex(m_buffer[i] >> 4);
-        result[index++] = toHex(m_buffer[i]);
-        result[index++] = ' ';
+        const uint8_t c = m_buffer[i];
+        dst[index++] = g_hex_lookup_table[c >> 4];
+        dst[index++] = g_hex_lookup_table[c & 0xf];
+        dst[index++] = ' ';
     }
-    result[index++] = ']';
+    dst[index++] = ']';
+#pragma clang diagnostic pop
 
     return result;
 }
 
-const std::string ByteBuffer::asString() const
+std::string ByteBuffer::asString() const
 {
     std::string result;
     result.reserve(m_bufferSz);
 
     for (size_t i = 0; i < m_bufferSz; ++i) {
-        uint8_t c = m_buffer[i];
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunsafe-buffer-usage"
+        const uint8_t c = m_buffer[i];
+#pragma clang diagnostic pop
         if ((c >= 0x20 && c <= 0x7e) || c == '\n' || c == '\t' || c == '\r') {
-            result.push_back(c);
+            result.push_back(static_cast<char>(c));
         }
     }
-    result.shrink_to_fit();
 
     return result;
 }
@@ -294,7 +309,7 @@ bool ByteBuffer::writeString(const std::string &data)
         return false;
     }
 
-    std::memcpy(&m_buffer[m_writeIndex], &data[0], sz);
+    mem_copy(&m_buffer[0], m_writeIndex, &data[0], 0, sz);
     m_writeIndex += sz;
 
     return true;
@@ -302,37 +317,43 @@ bool ByteBuffer::writeString(const std::string &data)
 
 bool ByteBuffer::writeHexString(const std::string &data)
 {
-    if (data.size() % 2 != 0) {
+    const size_t input_sz = data.size();
+    if ((input_sz & 0x1) != 0) {
         LOG_ERROR("Incorrect hex string size, should be % 2, data:" << data);
         return false;
     }
 
-    const auto sz = data.size() / 2;
+    const auto sz = input_sz / 2;
     if (m_writeIndex + sz > m_bufferSz) {
         LOG_ERROR("Data (size: " << sz << ") cannot be written to buffer. " << (m_bufferSz - m_writeIndex)
                                  << " free bytes left. Cannot write!");
         return false;
     }
 
-    // specific 'stoul' is faster than standart for hex digits
-    auto stoul = [](uint8_t data1, uint8_t data2) -> uint8_t {
-        auto get = [](uint8_t c) -> uint8_t {
-            if (c >= 0x30 && c <= 0x39) {
-                return c - uint8_t(0x30);
-            } else if (c >= 0x61 && c <= 0x66) {
-                return c - uint8_t(0x57);
-            } else if (c >= 0x41 && c <= 0x46) {
-                return c - uint8_t(0x37);
-            }
-            throw std::invalid_argument("Invalid argument provided: is not hex-digit");
-        };
-        return (get(data1) << 4) | get(data2);
-    };
+    static constexpr std::array<uint8_t, 256> s_stoul_lookup_table = [] {
+        std::array<uint8_t, 256> lut {};
+        for (auto &v : lut) {
+            v = 0xff;
+        }
+        for (uint8_t c = '0'; c <= '9'; ++c) {
+            lut[c] = c - '0';
+        }
+        for (uint8_t c = 'a'; c <= 'f'; ++c) {
+            lut[c] = c - 'a' + 10;
+        }
+        for (uint8_t c = 'A'; c <= 'F'; ++c) {
+            lut[c] = c - 'A' + 10;
+        }
+        return lut;
+    }();
 
-    for (size_t i = 0; i < data.size(); i += 2) {
-        const uint8_t v = stoul(data[i], data[i+1]);
-        m_buffer[m_writeIndex] = v;
-        ++m_writeIndex;
+    for (size_t i = 0; i < input_sz; i += 2) {
+        const uint8_t hi = s_stoul_lookup_table[static_cast<uint8_t>(data[i])];
+        const uint8_t lo = s_stoul_lookup_table[static_cast<uint8_t>(data[i + 1])];
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunsafe-buffer-usage"
+        m_buffer[m_writeIndex++] = uint8_t(hi << 4) | lo;
+#pragma clang diagnostic pop
     }
 
     return true;
@@ -349,7 +370,7 @@ bool ByteBuffer::readString(std::string &data, const size_t N) const
 
     data.clear();
     data.resize(sz);
-    std::memcpy(&data[0], &m_buffer[m_readIndex], sz);
+    mem_copy(&data[0], 0, &m_buffer[0], m_readIndex, sz);
     m_readIndex += sz;
 
     return true;
@@ -370,6 +391,8 @@ bool ByteBuffer::readLine(std::string &data, const uint8_t *delimiters, size_t N
     data.clear();
     data.resize(BLOCK_SZ);
 
+    auto ptr = data.data();
+
     uint8_t b = 0;
     size_t trailedDelimiters = 0;
     while (read(b)) {
@@ -389,14 +412,16 @@ bool ByteBuffer::readLine(std::string &data, const uint8_t *delimiters, size_t N
             }
             cache[index++] = b;
             if (index >= BLOCK_SZ) {
-                std::memcpy(&data[BLOCK_SZ * blockIndex], cache, BLOCK_SZ);
+                mem_copy(ptr, BLOCK_SZ * blockIndex, cache, 0, BLOCK_SZ);
                 data.resize(BLOCK_SZ * (++blockIndex + 1));
+                ptr = data.data();
                 index = 0;
             }
         }
     }
     data.resize(BLOCK_SZ * blockIndex + index);
-    std::memcpy(&data[BLOCK_SZ * blockIndex], cache, index);
+    ptr = data.data();
+    mem_copy(ptr, BLOCK_SZ * blockIndex, cache, 0, index);
 
     return remainingLength() > 0;
 }
@@ -411,7 +436,7 @@ ByteBuffer ByteBuffer::readToByteBuffer(const size_t N) const
     }
 
     uint8_t *temp = new uint8_t[sz]();
-    std::memcpy(temp, &m_buffer[m_readIndex], sz);
+    mem_copy(temp, 0, &m_buffer[0], m_readIndex, sz);
     m_readIndex += sz;
 
     return ByteBuffer(std::move(*temp), sz);
@@ -432,7 +457,10 @@ bool ByteBuffer::readToByteBuffer(ByteBuffer &buffer, const size_t N) const
         return false;
     }
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunsafe-buffer-usage"
     readBytes(buffer.m_buffer + buffer.m_writeIndex, sz);
+#pragma clang diagnostic pop
     buffer.m_writeIndex += sz;
 
     return true;
@@ -453,7 +481,10 @@ bool ByteBuffer::readToByteBuffer(ByteBuffer &buffer) const
         return false;
     }
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunsafe-buffer-usage"
     readBytes(buffer.m_buffer + buffer.m_writeIndex, sz);
+#pragma clang diagnostic pop
     buffer.m_writeIndex += sz;
 
     return true;

@@ -166,7 +166,7 @@ void BitSet::reverse()
     data = temp;
 }
 
-std::string BitSet::toString() const
+const std::string BitSet::toString() const
 {
     std::string result;
     result.resize(m_value->m_bitsNumber);

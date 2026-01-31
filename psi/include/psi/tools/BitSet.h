@@ -53,15 +53,15 @@ public:
     /**
      * @brief Set or unset bit.
      * 
-     * @param bitNumber 
-     * @param set 
+     * @param bitNumber Number of bit
+     * @param set Set/unset, bool
      */
     void set(size_t bitNumber, bool set = true);
 
     /**
      * @brief Test bit.
      * 
-     * @param bitNumber 
+     * @param bitNumber Number of bit
      * @return true 
      * @return false 
      */
@@ -84,7 +84,7 @@ public:
      * 
      * @return std::string 
      */
-    std::string toString() const;
+    const std::string toString() const;
 
 private:
     std::shared_ptr<BitSetImpl> m_value;

@@ -74,6 +74,9 @@ void sha::prepareMessageSchedule(const uint8_t *block, uint32_t *w)
 uint32_t sha::rightRotate(uint32_t v, uint8_t n)
 {
     n %= 32u;
+    if (n == 0) {
+        return v;
+    }
     return (v << (32u - n)) | (v >> n);
 }
 

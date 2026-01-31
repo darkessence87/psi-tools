@@ -129,6 +129,7 @@ public:
      */
     void substract(uint64_t i, uint64_t index);
 
+    struct BigInteger_Tests;
 private:
     // lower index = lower bits
     std::vector<uint64_t> m_value;

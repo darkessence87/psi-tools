@@ -1,6 +1,5 @@
-#include "TestHelper.h"
-#include <gmock/gmock.h>
-#include <gtest/gtest.h>
+#include "psi/test/TestHelper.h"
+#include "psi/test/psi_mock.h"
 
 #include <iostream>
 #include <set>
@@ -11,6 +10,7 @@
 
 using namespace psi::tools;
 using namespace psi::tools::crypt;
+using namespace psi::test;
 
 TEST(base64_Tests, EncryptionDecryption_Base64_Success)
 {
@@ -45,5 +45,5 @@ TEST(base64_Tests, EncryptionDecryption_Base64_Fail)
 {
     ByteBuffer encryptedMessage(0u);
     ByteBuffer decryptedMessage = base64::decryptBase64(encryptedMessage);
-    EXPECT_TRUE(decryptedMessage.size() == 0);
+    EXPECT_EQ(decryptedMessage.size(), size_t {0});
 }

@@ -1,17 +1,17 @@
-#include "TestHelper.h"
-#include <gmock/gmock.h>
-#include <gtest/gtest.h>
+#include "psi/test/TestHelper.h"
+#include "psi/test/psi_mock.h"
 
 #include "psi/tools/ByteBuffer.h"
 #include "psi/tools/crypt/x25519.h"
 
 using namespace psi::tools;
 using namespace psi::tools::crypt;
+using namespace psi::test;
 
 TEST(x25519_Tests, scalarmult_base)
 {
     auto doTest = [](const auto &testCaseName, const auto &privateKey, const auto &expectedKey) {
-        SCOPED_TRACE(testCaseName);
+        // SCOPED_TRACE(testCaseName);
 
         ByteBuffer privateKeyBuffer(privateKey, true);
         ByteBuffer publicKeyBuffer(32u);
@@ -37,7 +37,7 @@ TEST(x25519_Tests, scalarmult_base)
 TEST(x25519_Tests, scalarmult)
 {
     auto doTest = [](const auto &testCaseName, const auto &privateKey, const auto &publicKey, const auto &expectedKey) {
-        SCOPED_TRACE(testCaseName);
+        // SCOPED_TRACE(testCaseName);
 
         ByteBuffer privateKeyBuffer(privateKey, true);
         ByteBuffer publicKeyBuffer(publicKey, true);
