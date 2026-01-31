@@ -1,6 +1,5 @@
-#include "TestHelper.h"
-#include <gmock/gmock.h>
-#include <gtest/gtest.h>
+#include "psi/test/TestHelper.h"
+#include "psi/test/psi_mock.h"
 
 #include "psi/tools/Tools.h"
 
@@ -9,7 +8,6 @@
 #include <codecvt>
 #include <locale>
 
-using namespace ::testing;
 using namespace psi;
 using namespace psi::test;
 
@@ -58,10 +56,10 @@ TEST(ToolsTests, utf8_to_wstring_to_utf8)
     EXPECT_EQ(wstr1, std::wstring(L"\x420\x435\x432\x443\x449\x438\x439 \x444\x44C\x43E\x440\x434"));
 
     std::string str2 = tools::wstring_to_utf8(wstr1);
-    EXPECT_TRUE(std::u8string(str2.begin(), str2.end()) == str1);
+    EXPECT_EQ(std::u8string(str2.begin(), str2.end()), str1);
 }
 
-TEST(ToolsTests, performance)
+TEST(ToolsTests, to_hex_string_performance)
 {
     uint8_t buff64[64] = {
         'c', 'd', 'c', 'd', 'c', 'd', 'c', 'd', 'c', 'd', 'c', 'd', 'c', 'd', 'c', 'd', 'c', 'd', 'c', 'd', 'c', 'd',
@@ -165,12 +163,9 @@ TEST(ToolsTests, performance)
         'c', 'd',
     };
 
-    TestHelper::timeFn(
-        "to_hex_string buffer small (64 bytes)", [&]() { tools::to_hex_string(buff64, 64); }, 100000);
+    TestHelper::timeFn("to_hex_string buffer small (64 bytes)", [&]() { tools::to_hex_string(buff64, 64); }, 100000);
 
-    TestHelper::timeFn(
-        "to_hex_string buffer medium (2048 bytes)", [&]() { tools::to_hex_string(buff2048, 2048); }, 100000);
+    TestHelper::timeFn("to_hex_string buffer medium (2048 bytes)", [&]() { tools::to_hex_string(buff2048, 2048); }, 100000);
 
-    TestHelper::timeFn(
-        "to_hex_string number", []() { tools::to_hex_string(123456789); }, 1'000'000);
+    TestHelper::timeFn("to_hex_string number", []() { tools::to_hex_string(123456789); }, 1'000'000);
 }

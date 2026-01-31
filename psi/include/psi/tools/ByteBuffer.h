@@ -144,7 +144,7 @@ public:
             return false;
         }
 
-        std::memcpy(m_buffer + m_writeIndex, &data, sz);
+        mem_copy(m_buffer, m_writeIndex, &data, 0, sz);
         m_writeIndex += sz;
 
         return true;
@@ -181,7 +181,7 @@ public:
             return false;
         }
 
-        std::memcpy(&data, m_buffer + m_readIndex, sz);
+        mem_copy(&data, 0, m_buffer, m_readIndex, sz);
         m_readIndex += sz;
 
         return true;
@@ -224,7 +224,7 @@ public:
             return false;
         }
 
-        std::memcpy(m_buffer + m_writeIndex, data, sz);
+        mem_copy(m_buffer, m_writeIndex, data, 0, sz);
         m_writeIndex += sz;
 
         return true;
@@ -247,7 +247,7 @@ public:
             return false;
         }
 
-        std::memcpy(&data, m_buffer + m_readIndex, sz);
+        mem_copy(&data, 0, m_buffer, m_readIndex, sz);
         m_readIndex += sz;
 
         return true;
@@ -257,7 +257,6 @@ public:
      * @brief Read N bytes into custom data array from ByteBuffer.
      * 
      * @tparam T type of custom data array
-     * @tparam N number of elements in a custom data array
      * @return true if operation is successful, readIndex is increased by total size of custom data type
      * @return false if operation is failed, readIndex is not changed
      */
@@ -269,7 +268,7 @@ public:
             return false;
         }
 
-        std::memcpy(data, m_buffer + m_readIndex, sz);
+        mem_copy(data, 0, m_buffer, m_readIndex, sz);
         m_readIndex += sz;
 
         return true;
@@ -377,39 +376,39 @@ public:
     /**
      * @brief Convert ByteBuffer to vector of bytes.
      * 
-     * @return const std::vector<uint8_t> vector of bytes
+     * @return std::vector<uint8_t> vector of bytes
      */
-    const std::vector<uint8_t> asVector() const;
+    std::vector<uint8_t> asVector() const;
 
     /**
      * @brief Convert ByteBuffer to vector of uint64_t.
      * 
-     * @return const std::vector<uint64_t> represents full buffer as hexed integers
+     * @return std::vector<uint64_t> represents full buffer as hexed integers
      */
-    const std::vector<uint64_t> asHash() const;
+    std::vector<uint64_t> asHash() const;
 
     /**
      * @brief Convert ByteBuffer to string in hex format.
      * 
-     * @return const std::string string in hex format
+     * @return std::string string in hex format
      */
-    const std::string asHexString() const;
+    std::string asHexString() const;
 
     /**
      * @brief Convert ByteBuffer to string in hex format more readable for human.
      * Additionally formatted like: "[ 01 04 fd ae 00 a0 ]"
      * 
-     * @return const std::string string in hex format
+     * @return std::string string in hex format
      */
-    const std::string asHexStringFormatted() const;
+    std::string asHexStringFormatted() const;
 
     /**
      * @brief Convert ByteBuffer to string in a format readable for human.
      * Non-readable symbols are ignored.
      * 
-     * @return const std::string string in readable format
+     * @return std::string string in readable format
      */
-    const std::string asString() const;
+    std::string asString() const;
 
     /**
      * @brief Return size of ByteBuffer.
@@ -435,7 +434,19 @@ public:
      */
     size_t remainingLength() const;
 
-protected:
+    struct ByteBuffer_Tests;
+
+private:
+    template <typename T1, typename T2>
+    inline void mem_copy(T1 *from, size_t from_offset, T2 *to, size_t to_offset, size_t sz) const
+    {
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunsafe-buffer-usage"
+        std::memcpy(from + from_offset, to + to_offset, sz);
+#pragma clang diagnostic pop        
+    }
+
+private:
     size_t m_bufferSz = 0u;
     uint8_t *m_buffer = nullptr;
     mutable size_t m_readIndex = 0u;

@@ -1,6 +1,5 @@
-#include "TestHelper.h"
-#include <gmock/gmock.h>
-#include <gtest/gtest.h>
+#include "psi/test/TestHelper.h"
+#include "psi/test/psi_mock.h"
 
 #include "psi/tools/BitSet.h"
 
@@ -43,19 +42,19 @@ TEST(BitSetTests, test)
     BitSet data(200);
     for (uint16_t i = 0; i < 200; ++i) {
         data.set(i);
-        EXPECT_EQ(data.test(i), true);
+        EXPECT_TRUE(data.test(i));
         data.set(i, false);
-        EXPECT_EQ(data.test(i), false);
+        EXPECT_FALSE(data.test(i));
     }
 
     data.set(201);
-    EXPECT_EQ(data.test(201), false);
+    EXPECT_FALSE(data.test(201));
 }
 
 TEST(BitSetTests, inverse)
 {
     auto doTest = [](const auto &testCaseName, const auto &bits, const auto &expected) {
-        SCOPED_TRACE(testCaseName);
+        // SCOPED_TRACE(testCaseName);
 
         BitSet data(bits);
         data.inverse();
@@ -82,7 +81,7 @@ TEST(BitSetTests, inverse)
 TEST(BitSetTests, reverse)
 {
     auto doTest = [](const auto &testCaseName, const auto &bits, const auto &expected) {
-        SCOPED_TRACE(testCaseName);
+        // SCOPED_TRACE(testCaseName);
 
         BitSet data(bits);
         data.reverse();

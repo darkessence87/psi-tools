@@ -12,6 +12,8 @@
 
 namespace psi::tools {
 
+static constexpr char g_hex_lookup_table[17] = "0123456789abcdef";
+
 /**
  * @brief Converts input byte buffer to string in hex format.
  * 
@@ -19,23 +21,20 @@ namespace psi::tools {
  * @param sz length of input buffer
  * @return std::string hex formatted input data
  */
-inline std::string to_hex_string(uint8_t *buffer, size_t sz) noexcept
+inline std::string to_hex_string(uint8_t *buffer, size_t sz)
 {
     std::string result;
     result.resize(sz * 2);
 
-    auto toHex = [](uint8_t c) -> uint8_t {
-        uint8_t r = c & 0xf;
-        if (r <= 0x9) {
-            return r + uint8_t(0x30);
-        }
-        return r + uint8_t(0x57);
-    };
-
+    char *dst = result.data();
     size_t index = 0;
     for (size_t i = 0; i < sz; ++i) {
-        result[index++] = toHex(buffer[i] >> 4);
-        result[index++] = toHex(buffer[i]);
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunsafe-buffer-usage"
+        const uint8_t c = buffer[i];
+        dst[index++] = g_hex_lookup_table[c >> 4];
+        dst[index++] = g_hex_lookup_table[c & 0xf];
+#pragma clang diagnostic pop
     }
 
     return result;
@@ -47,33 +46,28 @@ inline std::string to_hex_string(uint8_t *buffer, size_t sz) noexcept
  * @param val input 8-bytes integer
  * @return std::string hex formatted input data
  */
-inline std::string to_hex_string(uint64_t val) noexcept
+inline std::string to_hex_string(uint64_t val)
 {
     std::string result;
     result.reserve(16);
 
-    auto toHex = [](uint8_t c) -> uint8_t {
-        uint8_t r = c & 0xf;
-        if (r <= 0x9) {
-            return r + uint8_t(0x30);
+    bool is_leading_zero = true;
+    for (int i = 7; i >= 0; --i) {
+        const uint8_t c = uint8_t(val >> (i * 8));
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunsafe-buffer-usage"
+        const char v1 = g_hex_lookup_table[c >> 4];
+        const char v2 = g_hex_lookup_table[c & 0xf];
+#pragma clang diagnostic pop
+        if (is_leading_zero && v1 == '0' && v2 == '0') {
+            continue;
         }
-        return r + uint8_t(0x57);
-    };
 
-    bool isLeadingZero = true;
-    for (int8_t i = 7; i >= 0; --i) {
-        auto v1 = toHex(uint8_t(val >> (i * 8 + 4)));
-        auto v2 = toHex(uint8_t(val >> (i * 8)));
-        if (isLeadingZero) {
-            isLeadingZero = v1 == 0x30 && v2 == 0x30;
-        }
-        if (!isLeadingZero) {
-            result.push_back(v1);
-            result.push_back(v2);
-        }
+        is_leading_zero = false;
+        result.push_back(v1);
+        result.push_back(v2);
     }
 
-    result.shrink_to_fit();
     return result;
 }
 
@@ -85,7 +79,7 @@ inline std::string to_hex_string(uint64_t val) noexcept
  * @return std::string std::string hex formatted input data
  */
 template <typename T>
-inline std::string ptr_to_address(T *ptr) noexcept
+inline std::string ptr_to_address(T *ptr)
 {
     return "0x" + to_hex_string(reinterpret_cast<size_t>(ptr));
 }
@@ -110,7 +104,7 @@ inline std::vector<std::pair<std::string, std::string>> parse_to_map(const std::
         if (pos != std::string::npos) {
             const auto tokenName = tokenLine.substr(0, pos);
             const auto tokenValue = tokenLine.substr(pos + 1, tokenLine.size());
-            tokens.emplace_back(std::pair<std::string,std::string> {tokenName, tokenValue});
+            tokens.emplace_back(std::pair<std::string, std::string> {tokenName, tokenValue});
         }
     }
     return tokens;
@@ -120,7 +114,7 @@ inline std::vector<std::pair<std::string, std::string>> parse_to_map(const std::
  * @brief Parses input string to list of tokens using provided delimiter.
  * 
  * @param s input string
- * @param delimiter 
+ * @param delimiter delimiter
  * @return std::vector<std::string> 
  */
 inline std::vector<std::string> parse_to_vector(const std::string &s, char delimiter) noexcept
@@ -194,7 +188,7 @@ inline std::string to_upper(const std::string &str) noexcept
     std::string data;
     data.resize(str.size());
     for (size_t index = 0; index < str.size(); ++index) {
-        data[index] = uint8_t(::toupper(str[index]));
+        data[index] = static_cast<char>(std::toupper(static_cast<uint8_t>(str[index])));
     }
     return data;
 }
@@ -269,11 +263,11 @@ inline std::string objName(const T &obj) noexcept
 }
 
 /**
- * @brief 
+ * @brief Swaps endianess 
  * 
- * @tparam T 
- * @param val 
- * @return T 
+ * @tparam T T
+ * @param val val
+ * @return T T
  */
 template <typename T>
 inline T swapEndian(const T &val)

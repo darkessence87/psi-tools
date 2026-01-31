@@ -1,6 +1,5 @@
-#include "TestHelper.h"
-#include <gmock/gmock.h>
-#include <gtest/gtest.h>
+#include "psi/test/TestHelper.h"
+#include "psi/test/psi_mock.h"
 
 #include <iostream>
 #include <set>
@@ -11,6 +10,7 @@
 
 using namespace psi::tools;
 using namespace psi::tools::crypt;
+using namespace psi::test;
 
 TEST(aes_Tests, subWord)
 {
@@ -202,7 +202,7 @@ TEST(aes_Tests, encryptAes_impl_AES128_ByteBuffer)
     const ByteBuffer key_("000102030405060708090a0b0c0d0e0f", true);
 
     {
-        SCOPED_TRACE("// case 1. two full blocks + one non-full block");
+        // SCOPED_TRACE("// case 1. two full blocks + one non-full block");
 
         ByteBuffer data(47u);
         data.writeHexString(
@@ -214,7 +214,7 @@ TEST(aes_Tests, encryptAes_impl_AES128_ByteBuffer)
     }
 
     {
-        SCOPED_TRACE("// case 2. one non-full block");
+        // SCOPED_TRACE("// case 2. one non-full block");
 
         ByteBuffer data(15u);
         data.writeHexString("00112233445566778899aabbccddee");
@@ -224,7 +224,7 @@ TEST(aes_Tests, encryptAes_impl_AES128_ByteBuffer)
     }
 
     {
-        SCOPED_TRACE("// case 3. full blocks");
+        // SCOPED_TRACE("// case 3. full blocks");
 
         {
             ByteBuffer key("000102030405060708090a0b0c0d0e0f", true);
@@ -269,7 +269,7 @@ TEST(aes_Tests, decryptAes_impl_AES128)
     key.writeHexString("000102030405060708090a0b0c0d0e0f");
 
     {
-        SCOPED_TRACE("// case 1. two full blocks + one non-full block");
+        // SCOPED_TRACE("// case 1. two full blocks + one non-full block");
 
         ByteBuffer data(49u);
         data.writeHexString(
@@ -281,7 +281,7 @@ TEST(aes_Tests, decryptAes_impl_AES128)
     }
 
     {
-        SCOPED_TRACE("// case 2. one non-full block");
+        // SCOPED_TRACE("// case 2. one non-full block");
 
         ByteBuffer data(17u);
         data.writeHexString("7c99f42b6ee503309c6c1a67e97ac2420f");
@@ -291,7 +291,7 @@ TEST(aes_Tests, decryptAes_impl_AES128)
     }
 
     {
-        SCOPED_TRACE("// case 3. one full block");
+        // SCOPED_TRACE("// case 3. one full block");
 
         ByteBuffer data(16u);
         data.writeHexString("69c4e0d86a7b0430d8cdb78070b4c55a");
@@ -327,7 +327,7 @@ TEST(aes_Tests, encryptAes_impl_AES256)
     key.writeHexString("000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f");
 
     {
-        SCOPED_TRACE("// case 1. two full blocks + one non-full block");
+        // SCOPED_TRACE("// case 1. two full blocks + one non-full block");
 
         ByteBuffer data(47u);
         data.writeHexString(
@@ -339,7 +339,7 @@ TEST(aes_Tests, encryptAes_impl_AES256)
     }
 
     {
-        SCOPED_TRACE("// case 2. one non-full block");
+        // SCOPED_TRACE("// case 2. one non-full block");
 
         ByteBuffer data(15u);
         data.writeHexString("00112233445566778899aabbccddee");
@@ -349,7 +349,7 @@ TEST(aes_Tests, encryptAes_impl_AES256)
     }
 
     {
-        SCOPED_TRACE("// case 3. one full block");
+        // SCOPED_TRACE("// case 3. one full block");
 
         ByteBuffer data(16u);
         data.writeHexString("00112233445566778899aabbccddeeff");
@@ -365,7 +365,7 @@ TEST(aes_Tests, decryptAes_impl_AES256)
     key.writeHexString("000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f");
 
     {
-        SCOPED_TRACE("// case 1. two full blocks + one non-full block");
+        // SCOPED_TRACE("// case 1. two full blocks + one non-full block");
 
         ByteBuffer data(49u);
         data.writeHexString(
@@ -377,7 +377,7 @@ TEST(aes_Tests, decryptAes_impl_AES256)
     }
 
     {
-        SCOPED_TRACE("// case 2. one non-full block");
+        // SCOPED_TRACE("// case 2. one non-full block");
 
         ByteBuffer data(17u);
         data.writeHexString("94501d9b894874a1f7feae67d905c45b0f");
@@ -387,7 +387,7 @@ TEST(aes_Tests, decryptAes_impl_AES256)
     }
 
     {
-        SCOPED_TRACE("// case 3. one full block");
+        // SCOPED_TRACE("// case 3. one full block");
 
         ByteBuffer data(16u);
         data.writeHexString("8ea2b7ca516745bfeafc49904b496089");

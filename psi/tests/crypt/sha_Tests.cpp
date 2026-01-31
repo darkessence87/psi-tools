@@ -1,6 +1,5 @@
-#include "TestHelper.h"
-#include <gmock/gmock.h>
-#include <gtest/gtest.h>
+#include "psi/test/TestHelper.h"
+#include "psi/test/psi_mock.h"
 
 #include "psi/tools/crypt/sha.h"
 
@@ -11,7 +10,7 @@ using namespace psi::test;
 TEST(sha_Tests, padMessage)
 {
     auto doTest = [](const auto &testCase, const auto &msg, const auto &expected) {
-        SCOPED_TRACE(testCase);
+        // SCOPED_TRACE(testCase);
 
         const ByteBuffer result = sha::padMessage(ByteBuffer(msg, true));
         EXPECT_EQ(result.asHexString(), expected);
@@ -49,7 +48,7 @@ TEST(sha_Tests, padMessage)
 TEST(sha_Tests, rightRotate)
 {
     auto doTest = [](const auto &testCase, uint32_t v, uint8_t n, uint32_t expected) {
-        SCOPED_TRACE(testCase);
+        // SCOPED_TRACE(testCase);
 
         const uint32_t result = sha::rightRotate(v, n);
         EXPECT_EQ(result, expected);
@@ -80,7 +79,7 @@ TEST(sha_Tests, rightRotate)
 TEST(sha_Tests, encode256)
 {
     auto doTest = [](const auto &testCase, const auto &msg, const auto &expected) {
-        SCOPED_TRACE(testCase);
+        // SCOPED_TRACE(testCase);
 
         const ByteBuffer result = sha::encode256(ByteBuffer(msg, true));
         EXPECT_EQ(result.asHexString(), expected);
@@ -101,7 +100,7 @@ TEST(sha_Tests, encode256)
 TEST(sha_Tests, hmac256)
 {
     auto doTest = [](const auto &testCase, const auto &key, const auto &msg, const auto &expected) {
-        SCOPED_TRACE(testCase);
+        // SCOPED_TRACE(testCase);
 
         const ByteBuffer result = sha::hmac256(ByteBuffer(key, true), ByteBuffer(msg, true));
         EXPECT_EQ(result.asHexString(), expected);
@@ -144,7 +143,7 @@ TEST(sha_Tests, hmac256)
 TEST(sha_Tests, hkdf256Extract)
 {
     auto doTest = [](const auto &testCase, const auto &kMat, const auto &seed, const auto &expected) {
-        SCOPED_TRACE(testCase);
+        // SCOPED_TRACE(testCase);
 
         const auto result = sha::hkdf256Extract(ByteBuffer(kMat, true), ByteBuffer(seed, true));
         EXPECT_EQ(result.asHexString(), expected);
@@ -173,7 +172,7 @@ TEST(sha_Tests, hkdf256Extract)
 TEST(sha_Tests, hkdf256Expand)
 {
     auto doTest = [](const auto &testCase, const auto &prk, const auto &info, size_t len, const auto &expected) {
-        SCOPED_TRACE(testCase);
+        // SCOPED_TRACE(testCase);
 
         const auto result = sha::hkdf256Expand(ByteBuffer(prk, true), ByteBuffer(info, true), len);
         EXPECT_EQ(result.asHexString(), expected);
@@ -202,7 +201,7 @@ TEST(sha_Tests, hkdf256)
 {
     auto doTest =
         [](const auto &testCase, const auto &key, const auto &seed, const auto &info, size_t len, const auto &expected) {
-            SCOPED_TRACE(testCase);
+            // SCOPED_TRACE(testCase);
 
             const auto result = sha::hkdf256(ByteBuffer(key, true), ByteBuffer(seed, true), ByteBuffer(info, true), len);
             EXPECT_EQ(result.asHexString(), expected);

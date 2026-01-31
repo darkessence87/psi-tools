@@ -5,6 +5,8 @@
 
 using namespace psi::tools;
 
+BigInteger fib_stack(uint64_t n);
+
 BigInteger fib_stack(uint64_t n)
 {
     if (n < 2) {

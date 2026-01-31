@@ -1,16 +1,16 @@
-#include "TestHelper.h"
-#include <gmock/gmock.h>
-#include <gtest/gtest.h>
+#include "psi/test/TestHelper.h"
+#include "psi/test/psi_mock.h"
 
 #include "psi/tools/crypt/aes_gcm.h"
 
 using namespace psi::tools;
 using namespace psi::tools::crypt;
+using namespace psi::test;
 
 TEST(aes_gcm_Tests, gfMultBlock)
 {
     auto doTest = [](const auto &testCase, const auto &x, const auto &y, const auto &expected) {
-        SCOPED_TRACE(testCase);
+        // SCOPED_TRACE(testCase);
 
         ByteBuffer xBuffer(x, true);
         ByteBuffer yBuffer(y, true);
@@ -45,7 +45,7 @@ TEST(aes_gcm_Tests, gfMultBlock)
 TEST(aes_gcm_Tests, encrypt)
 {
     {
-        SCOPED_TRACE("// case 1.");
+        // SCOPED_TRACE("// case 1.");
 
         const ByteBuffer key("00000000000000000000000000000000", true);
         const ByteBuffer data("");
@@ -61,7 +61,7 @@ TEST(aes_gcm_Tests, encrypt)
     }
 
     {
-        SCOPED_TRACE("// case 2.");
+        // SCOPED_TRACE("// case 2.");
 
         const ByteBuffer key("00000000000000000000000000000000", true);
         const ByteBuffer data("00000000000000000000000000000000", true);
@@ -77,7 +77,7 @@ TEST(aes_gcm_Tests, encrypt)
     }
 
     {
-        SCOPED_TRACE("// case 3.");
+        // SCOPED_TRACE("// case 3.");
 
         const ByteBuffer key("feffe9928665731c6d6a8f9467308308", true);
         const ByteBuffer data("d9313225f88406e5a55909c5aff5269a86a7a9531534f7da2e4c303d8a318a721c3c0c95956809532fcf0e24"
@@ -95,7 +95,7 @@ TEST(aes_gcm_Tests, encrypt)
     }
 
     {
-        SCOPED_TRACE("// case 4.");
+        // SCOPED_TRACE("// case 4.");
 
         const ByteBuffer key("feffe9928665731c6d6a8f9467308308", true);
         const ByteBuffer data("d9313225f88406e5a55909c5aff5269a86a7a9531534f7da2e4c303d8a318a721c3c0c95956809532fcf0e24"
@@ -114,7 +114,7 @@ TEST(aes_gcm_Tests, encrypt)
     }
 
     {
-        SCOPED_TRACE("// case 5.");
+        // SCOPED_TRACE("// case 5.");
 
         const ByteBuffer key("feffe9928665731c6d6a8f9467308308", true);
         const ByteBuffer data("d9313225f88406e5a55909c5aff5269a86a7a9531534f7da2e4c303d8a318a721c3c0c95956809532fcf0e24"
@@ -133,7 +133,7 @@ TEST(aes_gcm_Tests, encrypt)
     }
 
     {
-        SCOPED_TRACE("// case 6.");
+        // SCOPED_TRACE("// case 6.");
 
         const ByteBuffer key("feffe9928665731c6d6a8f9467308308", true);
         const ByteBuffer data("d9313225f88406e5a55909c5aff5269a86a7a9531534f7da2e4c303d8a318a721c3c0c95956809532fcf0e24"
@@ -156,7 +156,7 @@ TEST(aes_gcm_Tests, encrypt)
 TEST(aes_gcm_Tests, decrypt)
 {
     {
-        SCOPED_TRACE("// case 1.");
+        // SCOPED_TRACE("// case 1.");
 
         const ByteBuffer key("00000000000000000000000000000000", true);
         const ByteBuffer encodedData("");
@@ -169,7 +169,7 @@ TEST(aes_gcm_Tests, decrypt)
     }
 
     {
-        SCOPED_TRACE("// case 2.");
+        // SCOPED_TRACE("// case 2.");
 
         const ByteBuffer key("00000000000000000000000000000000", true);
         const ByteBuffer encodedData("0388dace60b6a392f328c2b971b2fe78", true);
@@ -182,7 +182,7 @@ TEST(aes_gcm_Tests, decrypt)
     }
 
     {
-        SCOPED_TRACE("// case 3.");
+        // SCOPED_TRACE("// case 3.");
 
         const ByteBuffer key("feffe9928665731c6d6a8f9467308308", true);
         const ByteBuffer encodedData("42831ec2217774244b7221b784d0d49ce3aa212f2c02a4e035c17e2329aca12e21d514b25466931c7"
@@ -197,7 +197,7 @@ TEST(aes_gcm_Tests, decrypt)
     }
 
     {
-        SCOPED_TRACE("// case 4.");
+        // SCOPED_TRACE("// case 4.");
 
         const ByteBuffer key("feffe9928665731c6d6a8f9467308308", true);
         const ByteBuffer encodedData("42831ec2217774244b7221b784d0d49ce3aa212f2c02a4e035c17e2329aca12e21d514b25466931c7"
@@ -213,7 +213,7 @@ TEST(aes_gcm_Tests, decrypt)
     }
 
     {
-        SCOPED_TRACE("// case 5.");
+        // SCOPED_TRACE("// case 5.");
 
         const ByteBuffer key("feffe9928665731c6d6a8f9467308308", true);
         const ByteBuffer encodedData("61353b4c2806934a777ff51fa22a4755699b2a714fcdc6f83766e5f97b6c742373806900e49f24b22"
@@ -229,7 +229,7 @@ TEST(aes_gcm_Tests, decrypt)
     }
 
     {
-        SCOPED_TRACE("// case 6.");
+        // SCOPED_TRACE("// case 6.");
 
         const ByteBuffer key("feffe9928665731c6d6a8f9467308308", true);
         const ByteBuffer encodedData("8ce24998625615b603a033aca13fb894be9112a5c3a211a8ba262a3cca7e2ca701e4a9a4fba43c90c"
@@ -249,7 +249,7 @@ TEST(aes_gcm_Tests, decrypt)
 TEST(aes_gcm_Tests, encrypt_decrypt)
 {
     auto doTest = [](const auto &testCase, const auto &d, const auto &k, const auto &i) {
-        SCOPED_TRACE(testCase);
+        // SCOPED_TRACE(testCase);
 
         ByteBuffer data(d, true);
         ByteBuffer key(k, true);

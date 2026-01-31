@@ -1,54 +1,62 @@
-#include "TestHelper.h"
-#include <gmock/gmock.h>
-#include <gtest/gtest.h>
+#include "psi/test/TestHelper.h"
+#include "psi/test/psi_mock.h"
 
-#define protected public
 #include "psi/tools/ByteBuffer.h"
-#undef protected
 
 using namespace psi::test;
 using namespace psi::tools;
 
-TEST(ByteBufferTests, default_ctor)
+struct ByteBuffer::ByteBuffer_Tests {
+    static auto readIndex(ByteBuffer &b)
+    {
+        return b.m_readIndex;
+    }
+    static auto writeIndex(ByteBuffer &b)
+    {
+        return b.m_writeIndex;
+    }
+};
+
+TEST(ByteBuffer_Tests, default_ctor)
 {
     ByteBuffer data;
-    EXPECT_EQ(data.size(), 0u);
+    EXPECT_EQ(data.size(), size_t {0});
     EXPECT_EQ(data.data(), nullptr);
 
-    EXPECT_EQ(data.m_readIndex, 0u);
-    EXPECT_EQ(data.m_writeIndex, 0u);
+    EXPECT_EQ(ByteBuffer::ByteBuffer_Tests::readIndex(data), size_t(0));
+    EXPECT_EQ(ByteBuffer::ByteBuffer_Tests::writeIndex(data), size_t(0));
 }
 
-TEST(ByteBufferTests, ctor_customSize)
+TEST(ByteBuffer_Tests, ctor_customSize)
 {
     const size_t N = 47u;
     ByteBuffer data(N);
     EXPECT_EQ(data.size(), N);
     EXPECT_NE(data.data(), nullptr);
 
-    EXPECT_EQ(data.m_readIndex, 0u);
-    EXPECT_EQ(data.m_writeIndex, 0u);
+    EXPECT_EQ(ByteBuffer::ByteBuffer_Tests::readIndex(data), 0u);
+    EXPECT_EQ(ByteBuffer::ByteBuffer_Tests::writeIndex(data), 0u);
 }
 
-TEST(ByteBufferTests, ctor_RValuedData)
+TEST(ByteBuffer_Tests, ctor_RValuedData)
 {
     const size_t N = 47u;
     uint8_t *buffer = new uint8_t[N] {'a', 'b'};
-    ByteBuffer data(std::move(*buffer), N);
+    ByteBuffer data(buffer, N);
     EXPECT_EQ(data.size(), N);
     EXPECT_EQ(data.data(), buffer);
     // delete[] buffer; // generates error because object is moved into the buffer
 
-    EXPECT_EQ(data.m_readIndex, 0u);
-    EXPECT_EQ(data.m_writeIndex, N);
+    EXPECT_EQ(ByteBuffer::ByteBuffer_Tests::readIndex(data), 0u);
+    EXPECT_EQ(ByteBuffer::ByteBuffer_Tests::writeIndex(data), N);
 }
 
-TEST(ByteBufferTests, ctor_LValuedData)
+TEST(ByteBuffer_Tests, ctor_LValuedData)
 {
     const size_t N = 47u;
 
     {
-        SCOPED_TRACE("// case 1. moved from a stack");
+        // SCOPED_TRACE("// case 1. moved from a stack");
 
         uint8_t *buffer = new uint8_t[N]();
         ByteBuffer data(buffer, N);
@@ -59,14 +67,14 @@ TEST(ByteBufferTests, ctor_LValuedData)
             EXPECT_EQ(data.at(i), buffer[i]);
         }
 
-        EXPECT_EQ(data.m_readIndex, 0u);
-        EXPECT_EQ(data.m_writeIndex, N);
+        EXPECT_EQ(ByteBuffer::ByteBuffer_Tests::readIndex(data), 0u);
+        EXPECT_EQ(ByteBuffer::ByteBuffer_Tests::writeIndex(data), N);
 
         // delete[] buffer; // generates error because object is moved into the buffer
     }
 
     {
-        SCOPED_TRACE("// case 2. moved from a temporary");
+        // SCOPED_TRACE("// case 2. moved from a temporary");
 
         ByteBuffer data(new uint8_t[N] {'a', 'b'}, N);
         EXPECT_EQ(data.size(), N);
@@ -75,12 +83,12 @@ TEST(ByteBufferTests, ctor_LValuedData)
         EXPECT_EQ(data.at(0), 'a');
         EXPECT_EQ(data.at(1), 'b');
 
-        EXPECT_EQ(data.m_readIndex, 0u);
-        EXPECT_EQ(data.m_writeIndex, N);
+        EXPECT_EQ(ByteBuffer::ByteBuffer_Tests::readIndex(data), 0u);
+        EXPECT_EQ(ByteBuffer::ByteBuffer_Tests::writeIndex(data), N);
     }
 }
 
-TEST(ByteBufferTests, ctor_string)
+TEST(ByteBuffer_Tests, ctor_string)
 {
     ByteBuffer data("test");
     EXPECT_EQ(data.asString(), "test");
@@ -89,7 +97,7 @@ TEST(ByteBufferTests, ctor_string)
     EXPECT_EQ(hexData.asHexString(), "abcdef0123456789");
 }
 
-TEST(ByteBufferTests, dtor)
+TEST(ByteBuffer_Tests, dtor)
 {
     const size_t N = 47u;
 
@@ -98,12 +106,12 @@ TEST(ByteBufferTests, dtor)
     }
 }
 
-TEST(ByteBufferTests, ctor_copy)
+TEST(ByteBuffer_Tests, ctor_copy)
 {
     const size_t N = 47u;
 
     {
-        SCOPED_TRACE("// case 1. copy to new buffer via ctor");
+        // SCOPED_TRACE("// case 1. copy to new buffer via ctor");
 
         ByteBuffer data1(new uint8_t[N] {'a', 'b'}, N);
         ByteBuffer data2(data1);
@@ -113,12 +121,12 @@ TEST(ByteBufferTests, ctor_copy)
         EXPECT_EQ(data2.at(0), 'a');
         EXPECT_EQ(data2.at(1), 'b');
 
-        EXPECT_EQ(data2.m_readIndex, data1.m_readIndex);
-        EXPECT_EQ(data2.m_writeIndex, data1.m_writeIndex);
+        EXPECT_EQ(ByteBuffer::ByteBuffer_Tests::readIndex(data2), ByteBuffer::ByteBuffer_Tests::readIndex(data1));
+        EXPECT_EQ(ByteBuffer::ByteBuffer_Tests::writeIndex(data2), ByteBuffer::ByteBuffer_Tests::writeIndex(data1));
     }
 
     {
-        SCOPED_TRACE("// case 2. copy to new buffer via operator");
+        // SCOPED_TRACE("// case 2. copy to new buffer via operator");
 
         ByteBuffer data1(new uint8_t[N] {'a', 'b'}, N);
         ByteBuffer data2 = data1;
@@ -128,17 +136,17 @@ TEST(ByteBufferTests, ctor_copy)
         EXPECT_EQ(data2.at(0), 'a');
         EXPECT_EQ(data2.at(1), 'b');
 
-        EXPECT_EQ(data2.m_readIndex, data1.m_readIndex);
-        EXPECT_EQ(data2.m_writeIndex, data1.m_writeIndex);
+        EXPECT_EQ(ByteBuffer::ByteBuffer_Tests::readIndex(data2), ByteBuffer::ByteBuffer_Tests::readIndex(data1));
+        EXPECT_EQ(ByteBuffer::ByteBuffer_Tests::writeIndex(data2), ByteBuffer::ByteBuffer_Tests::writeIndex(data1));
     }
 }
 
-TEST(ByteBufferTests, ctor_copy_operator)
+TEST(ByteBuffer_Tests, ctor_copy_operator)
 {
     const size_t N = 47u;
 
     ByteBuffer data1(new uint8_t[N] {'b', 'a', 'c'}, N - 1);
-    data1.m_readIndex = 1;
+    data1.skipRead(1);
 
     ByteBuffer data2(new uint8_t[N] {'a', 'b'}, N);
     data2 = data1;
@@ -150,58 +158,58 @@ TEST(ByteBufferTests, ctor_copy_operator)
     EXPECT_EQ(data2.at(1), 'a');
     EXPECT_EQ(data2.at(2), 'c');
 
-    EXPECT_EQ(data2.m_readIndex, data1.m_readIndex);
-    EXPECT_EQ(data2.m_writeIndex, data1.m_writeIndex);
+    EXPECT_EQ(ByteBuffer::ByteBuffer_Tests::readIndex(data2), ByteBuffer::ByteBuffer_Tests::readIndex(data1));
+    EXPECT_EQ(ByteBuffer::ByteBuffer_Tests::writeIndex(data2), ByteBuffer::ByteBuffer_Tests::writeIndex(data1));
 }
 
-TEST(ByteBufferTests, clear)
+TEST(ByteBuffer_Tests, clear)
 {
     const size_t N = 47u;
 
     ByteBuffer data(new uint8_t[N] {'b', 'a', 'c'}, N);
-    data.m_readIndex = 1;
-    data.m_writeIndex = 2;
+    data.skipRead(1);
+    data.skipWrite(2);
 
     data.clear();
 
     EXPECT_EQ(data.at(0), '\0');
     EXPECT_EQ(data.at(1), '\0');
     EXPECT_EQ(data.at(2), '\0');
-    EXPECT_EQ(data.m_readIndex, 0u);
-    EXPECT_EQ(data.m_writeIndex, 0u);
+    EXPECT_EQ(ByteBuffer::ByteBuffer_Tests::readIndex(data), 0u);
+    EXPECT_EQ(ByteBuffer::ByteBuffer_Tests::writeIndex(data), 0u);
 }
 
-TEST(ByteBufferTests, reset)
+TEST(ByteBuffer_Tests, reset)
 {
     const size_t N = 47u;
 
     ByteBuffer data(new uint8_t[N] {'b', 'a', 'c'}, N);
-    data.m_readIndex = 1;
-    data.m_writeIndex = 2;
+    data.skipRead(1);
+    data.skipWrite(2);
 
     data.reset();
 
     EXPECT_EQ(data.at(0), 'b');
     EXPECT_EQ(data.at(1), 'a');
     EXPECT_EQ(data.at(2), 'c');
-    EXPECT_EQ(data.m_readIndex, 0u);
-    EXPECT_EQ(data.m_writeIndex, 0u);
+    EXPECT_EQ(ByteBuffer::ByteBuffer_Tests::readIndex(data), 0u);
+    EXPECT_EQ(ByteBuffer::ByteBuffer_Tests::writeIndex(data), 0u);
 }
 
-TEST(ByteBufferTests, skipRead)
+TEST(ByteBuffer_Tests, skipRead)
 {
     const size_t N = 3u;
 
     ByteBuffer data(new uint8_t[N] {'b', 'a', 'c'}, N);
 
     EXPECT_EQ(data.skipRead(2), true);
-    EXPECT_EQ(data.m_readIndex, 2u);
+    EXPECT_EQ(ByteBuffer::ByteBuffer_Tests::readIndex(data), 2u);
 
     EXPECT_EQ(data.skipRead(2), false);
-    EXPECT_EQ(data.m_readIndex, 2u);
+    EXPECT_EQ(ByteBuffer::ByteBuffer_Tests::readIndex(data), 2u);
 }
 
-TEST(ByteBufferTests, skipWrite)
+TEST(ByteBuffer_Tests, skipWrite)
 {
     const size_t N = 3u;
 
@@ -209,13 +217,13 @@ TEST(ByteBufferTests, skipWrite)
     data.reset();
 
     EXPECT_EQ(data.skipWrite(2), true);
-    EXPECT_EQ(data.m_writeIndex, 2u);
+    EXPECT_EQ(ByteBuffer::ByteBuffer_Tests::writeIndex(data), 2u);
 
     EXPECT_EQ(data.skipWrite(2), false);
-    EXPECT_EQ(data.m_writeIndex, 2u);
+    EXPECT_EQ(ByteBuffer::ByteBuffer_Tests::writeIndex(data), 2u);
 }
 
-TEST(ByteBufferTests, at)
+TEST(ByteBuffer_Tests, at)
 {
     const size_t N = 3u;
 
@@ -226,9 +234,9 @@ TEST(ByteBufferTests, at)
     EXPECT_EQ(data.at(2), 'c');
 }
 
-TEST(ByteBufferTests, data)
+TEST(ByteBuffer_Tests, data)
 {
-    const size_t N = 3u;
+    constexpr size_t N = 3u;
 
     ByteBuffer data(new uint8_t[N] {'b', 'a', 'c'}, N);
 
@@ -238,7 +246,7 @@ TEST(ByteBufferTests, data)
     }
 }
 
-TEST(ByteBufferTests, asVector)
+TEST(ByteBuffer_Tests, asVector)
 {
     const size_t N = 3u;
 
@@ -248,7 +256,7 @@ TEST(ByteBufferTests, asVector)
     EXPECT_EQ(expected, data.asVector());
 }
 
-TEST(ByteBufferTests, asHash)
+TEST(ByteBuffer_Tests, asHash)
 {
     const size_t N = 13u;
 
@@ -273,7 +281,7 @@ TEST(ByteBufferTests, asHash)
     EXPECT_EQ(expected, data.asHash());
 }
 
-TEST(ByteBufferTests, asHexString)
+TEST(ByteBuffer_Tests, asHexString)
 {
     const size_t N = 13u;
 
@@ -296,7 +304,7 @@ TEST(ByteBufferTests, asHexString)
     EXPECT_EQ(expected, data.asHexString());
 }
 
-TEST(ByteBufferTests, asHexStringFormatted)
+TEST(ByteBuffer_Tests, asHexStringFormatted)
 {
     const size_t N = 13u;
 
@@ -319,7 +327,7 @@ TEST(ByteBufferTests, asHexStringFormatted)
     EXPECT_EQ(expected, data.asHexStringFormatted());
 }
 
-TEST(ByteBufferTests, asString)
+TEST(ByteBuffer_Tests, asString)
 {
     const size_t N = 13u;
 
@@ -342,7 +350,7 @@ TEST(ByteBufferTests, asString)
     EXPECT_EQ(expected, data.asString());
 }
 
-TEST(ByteBufferTests, size)
+TEST(ByteBuffer_Tests, size)
 {
     const size_t N = 13u;
 
@@ -350,26 +358,26 @@ TEST(ByteBufferTests, size)
     EXPECT_EQ(data.size(), N);
 }
 
-TEST(ByteBufferTests, length)
+TEST(ByteBuffer_Tests, length)
 {
     ByteBuffer data(20);
     data.write(uint16_t(20));
-    EXPECT_EQ(data.length(), 2);
+    EXPECT_EQ(data.length(), size_t {2});
 }
 
-TEST(ByteBufferTests, remaininglength)
+TEST(ByteBuffer_Tests, remaininglength)
 {
     ByteBuffer data(20);
     data.write(uint64_t(20));
     data.write(uint64_t(20));
-    EXPECT_EQ(data.remainingLength(), 16);
+    EXPECT_EQ(data.remainingLength(), size_t {16});
     data.skipRead(8);
-    EXPECT_EQ(data.remainingLength(), 8);
+    EXPECT_EQ(data.remainingLength(), size_t {8});
     data.skipRead(8);
-    EXPECT_EQ(data.remainingLength(), 0);
+    EXPECT_EQ(data.remainingLength(), size_t {0});
 }
 
-TEST(ByteBufferTests, writeString)
+TEST(ByteBuffer_Tests, writeString)
 {
     const size_t N = 10u;
     ByteBuffer data(N);
@@ -379,7 +387,7 @@ TEST(ByteBufferTests, writeString)
     EXPECT_EQ(data.asString(), "abcdefghij");
 }
 
-TEST(ByteBufferTests, writeHexString)
+TEST(ByteBuffer_Tests, writeHexString)
 {
     const size_t N = 10u;
     ByteBuffer data(N);
@@ -390,7 +398,7 @@ TEST(ByteBufferTests, writeHexString)
     EXPECT_EQ(data.asHexString(), "abcdef0102030405067f");
 }
 
-TEST(ByteBufferTests, readString)
+TEST(ByteBuffer_Tests, readString)
 {
     const size_t N = 10u;
     ByteBuffer data(N);
@@ -402,12 +410,12 @@ TEST(ByteBufferTests, readString)
     EXPECT_EQ(str, "abcd");
 }
 
-TEST(ByteBufferTests, readLine)
+TEST(ByteBuffer_Tests, readLine)
 {
     using Expected = std::vector<std::string>;
     using Delims = std::vector<uint8_t>;
     auto doTest = [](const auto &testCaseName, const auto &dataHex, const Expected &expected, const Delims &delims = {}) {
-        SCOPED_TRACE(testCaseName);
+        // SCOPED_TRACE(testCaseName);
 
         ByteBuffer data(dataHex, true);
         Expected lines;
@@ -426,15 +434,16 @@ TEST(ByteBufferTests, readLine)
 
     doTest("case 1. Header delimiter", "0d616263", {"", "abc"});
     doTest("case 2. Trailed delimiter", "6162630a", {"abc"});
-    doTest("case 3. Middle delimiter", "61620d63", {"ab", "c"});
-    doTest("case 4. Mixed delimiters", "0d61620d630d", {"", "ab", "c"});
-    doTest("case 5. No delimiters", "616263", {"abc"});
-    doTest("case 6. Only delimiters", "0a0d", {});
-    doTest("case 7. Empty buffer", "", {});
-    doTest("case 8. Custom delimiters", "6162636465666768", {"a", "c", "e", "g"}, {0x62, 0x64, 0x66, 0x68});
+    doTest("case 3. Trailed delimiters", "0d61620d170a630a", {"", "ab", "c"});
+    doTest("case 4. Middle delimiter", "61620d63", {"ab", "c"});
+    doTest("case 5. Mixed delimiters", "0d61620d630d", {"", "ab", "c"});
+    doTest("case 6. No delimiters", "616263", {"abc"});
+    doTest("case 7. Only delimiters", "0a0d", {});
+    doTest("case 8. Empty buffer", "", {});
+    doTest("case 9. Custom delimiters", "6162636465666768", {"a", "c", "e", "g"}, {0x62, 0x64, 0x66, 0x68});
 }
 
-TEST(ByteBufferTests, readToByteBuffer)
+TEST(ByteBuffer_Tests, readToByteBuffer)
 {
     const size_t N = 10u;
     ByteBuffer data(N);
@@ -448,7 +457,7 @@ TEST(ByteBufferTests, readToByteBuffer)
     EXPECT_EQ(data2.asString(), "abcde");
 }
 
-TEST(ByteBufferTests, write)
+TEST(ByteBuffer_Tests, write)
 {
     const size_t N = 10u;
     ByteBuffer data(N);
@@ -461,7 +470,7 @@ TEST(ByteBufferTests, write)
     EXPECT_EQ(data.write(uint8_t(10u)), false);
 }
 
-TEST(ByteBufferTests, writeSwapped)
+TEST(ByteBuffer_Tests, writeSwapped)
 {
     const size_t N = 10u;
     ByteBuffer data(N);
@@ -480,7 +489,7 @@ TEST(ByteBufferTests, writeSwapped)
     EXPECT_EQ(data.writeSwapped(uint8_t(10u)), false);
 }
 
-TEST(ByteBufferTests, read)
+TEST(ByteBuffer_Tests, read)
 {
     const size_t N = 10u;
     ByteBuffer data(N);
@@ -500,7 +509,7 @@ TEST(ByteBufferTests, read)
     EXPECT_EQ(data.read(c), false);
 }
 
-TEST(ByteBufferTests, readSwapped)
+TEST(ByteBuffer_Tests, readSwapped)
 {
     const size_t N = 10u;
     ByteBuffer data(N);
@@ -520,7 +529,7 @@ TEST(ByteBufferTests, readSwapped)
     EXPECT_EQ(data.readSwapped(c), false);
 }
 
-TEST(ByteBufferTests, writeArray)
+TEST(ByteBuffer_Tests, writeArray)
 {
     const size_t N = 10u;
     ByteBuffer data(N);
@@ -532,14 +541,20 @@ TEST(ByteBufferTests, writeArray)
     uint64_t b[1] {10u};
     EXPECT_EQ(data.writeArray(b, 1), false);
     // write uint8_t[7], failed because array does not match free space of buffer
-    uint8_t c[7];
+    uint8_t c[7] = {};
     EXPECT_EQ(data.writeArray(c, 7), false);
     // write uint8_t[6], success
-    uint8_t d[6];
+    uint8_t d[6] = {};
     EXPECT_EQ(data.writeArray(d, 6), true);
+    EXPECT_EQ(data.asHexString(), "0a000c00000000000000");
+
+    // ByteBuffer data2(N);
+    // uint16_t e[2] {11u, 13u};
+    // EXPECT_EQ(data2.writeArray(e), true);
+    // EXPECT_EQ(data2.asHexString(), "0b000d00000000000000");
 }
 
-TEST(ByteBufferTests, readArray)
+TEST(ByteBuffer_Tests, readArray)
 {
     const size_t N = 10u;
     ByteBuffer data(N);
@@ -575,7 +590,7 @@ TEST(ByteBufferTests, readArray)
     EXPECT_EQ(data.readArray(c), false);
 }
 
-TEST(ByteBufferTests, readBytes)
+TEST(ByteBuffer_Tests, readBytes)
 {
     ByteBuffer data1(20);
     data1.writeString("123456789a");
@@ -588,10 +603,10 @@ TEST(ByteBufferTests, readBytes)
     EXPECT_EQ(data2[4], '5');
 }
 
-TEST(ByteBufferTests, readToByteBuffer_2)
+TEST(ByteBuffer_Tests, readToByteBuffer_2)
 {
     {
-        SCOPED_TRACE("// case 1. srcBuff no read bytes available");
+        // SCOPED_TRACE("// case 1. srcBuff no read bytes available");
 
         ByteBuffer srcBuff("0123456789");
         ByteBuffer tarBuff(20);
@@ -599,7 +614,7 @@ TEST(ByteBufferTests, readToByteBuffer_2)
     }
 
     {
-        SCOPED_TRACE("// case 2. tarBuff no write space available");
+        // SCOPED_TRACE("// case 2. tarBuff no write space available");
 
         ByteBuffer srcBuff("0123456789a");
         ByteBuffer tarBuff(20);
@@ -608,7 +623,7 @@ TEST(ByteBufferTests, readToByteBuffer_2)
     }
 
     {
-        SCOPED_TRACE("// case 3. success");
+        // SCOPED_TRACE("// case 3. success");
 
         ByteBuffer srcBuff("0123456789a");
         ByteBuffer tarBuff(20);
@@ -617,7 +632,7 @@ TEST(ByteBufferTests, readToByteBuffer_2)
     }
 }
 
-TEST(ByteBufferTests, performance)
+TEST(ByteBuffer_Tests, performance)
 {
     TestHelper::timeFn(
         "writeString small (64 bytes)",

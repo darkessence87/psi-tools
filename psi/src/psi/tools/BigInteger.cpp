@@ -16,10 +16,10 @@ BigInteger::BigInteger(uint64_t v)
 
 BigInteger::BigInteger(const std::vector<uint64_t> &v)
 {
-    size_t endIndex = 0;
+    int64_t endIndex = 0;
     for (size_t k = v.size(); k > 0; --k) {
         if (v[k - 1] != 0) {
-            endIndex = k - 1;
+            endIndex = int64_t(k - 1);
             break;
         }
     }
@@ -151,10 +151,10 @@ void BigInteger::substract(uint64_t i, uint64_t index)
         }
     }
 
-    size_t endIndex = 0;
+    int64_t endIndex = 0;
     for (size_t k = m_value.size(); k > 0; --k) {
         if (m_value[k - 1] != 0) {
-            endIndex = k - 1;
+            endIndex = int64_t(k - 1);
             m_value = std::vector<uint64_t>(m_value.begin(), m_value.begin() + endIndex + 1);
             break;
         }
