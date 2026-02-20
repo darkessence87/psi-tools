@@ -34,7 +34,7 @@ public:
      * @param data pointer to data
      * @param sz data size in bytes
      */
-    BitSet(uint8_t *data, size_t sz);
+    BitSet(const uint8_t *data, size_t sz);
 
     /**
      * @brief Construct a new BitSet object.

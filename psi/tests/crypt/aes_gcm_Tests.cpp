@@ -12,10 +12,10 @@ TEST(aes_gcm_Tests, gfMultBlock)
     auto doTest = [](const auto &testCase, const auto &x, const auto &y, const auto &expected) {
         // SCOPED_TRACE(testCase);
 
-        ByteBuffer xBuffer(x, true);
-        ByteBuffer yBuffer(y, true);
+        aes_gcm::DataBlock16 xBuffer = ByteBuffer(x, true).asArray<uint8_t,16>();
+        aes_gcm::DataBlock16 yBuffer = ByteBuffer(y, true).asArray<uint8_t,16>();
         aes_gcm::DataBlock16 z {};
-        aes_gcm::gfMultBlock(xBuffer.data(), yBuffer.data(), z);
+        aes_gcm::gfMultBlock(xBuffer, yBuffer, z);
         ByteBuffer zBuffer(16);
         zBuffer.write(z);
         EXPECT_EQ(zBuffer.asHexString(), expected);

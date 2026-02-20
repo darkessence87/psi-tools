@@ -279,4 +279,31 @@ inline T swapEndian(const T &val)
     return result;
 }
 
+template <typename T>
+inline T *shift_ptr(T *src, size_t src_offset)
+{
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunsafe-buffer-usage"
+    return src + src_offset;
+#pragma clang diagnostic pop
+}
+
+template <typename T1, typename T2>
+inline void mem_copy(T1 *to, size_t to_offset, const T2 *from, size_t from_offset, size_t sz)
+{
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunsafe-buffer-usage-in-libc-call"
+    std::memcpy(shift_ptr(to, to_offset), shift_ptr(from, from_offset), sz);
+#pragma clang diagnostic pop
+}
+
+template <typename T>
+inline void mem_set(T *to, size_t to_offset, T value, size_t sz)
+{
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunsafe-buffer-usage-in-libc-call"
+    std::memset(shift_ptr(to, to_offset), value, sz);
+#pragma clang diagnostic pop
+}
+
 } // namespace psi::tools

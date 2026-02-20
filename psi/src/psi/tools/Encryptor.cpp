@@ -8,20 +8,6 @@
 #include "crypt/sha.h"
 #include "crypt/x25519.h"
 
-#ifdef PSI_LOGGER
-#include "psi/logger/Logger.h"
-#else
-#include <iostream>
-#include <sstream>
-#define LOG_TRACE_STATIC(x)                                                                                            \
-    do {                                                                                                               \
-        std::ostringstream os;                                                                                         \
-        os << x;                                                                                                       \
-        std::cout << os.str() << std::endl;                                                                            \
-    } while (0)
-#define LOG_ERROR_STATIC(x) LOG_TRACE_STATIC(x)
-#endif
-
 namespace psi::tools {
 
 ByteBuffer Encryptor::encryptBase64(const ByteBuffer &inputBuffer)

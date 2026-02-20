@@ -32,14 +32,14 @@ ByteBuffer::ByteBuffer(size_t sz)
 
 ByteBuffer::ByteBuffer(uint8_t &&arr, size_t sz)
     : m_bufferSz(sz)
-    , m_buffer(std::move(&arr))
+    , m_buffer(&arr)
     , m_writeIndex(sz)
 {
 }
 
 ByteBuffer::ByteBuffer(uint8_t *arr, size_t sz)
     : m_bufferSz(sz)
-    , m_buffer(std::move(arr))
+    , m_buffer(arr)
     , m_writeIndex(sz)
 {
 }
@@ -139,7 +139,7 @@ void ByteBuffer::clear()
     reset();
 }
 
-void ByteBuffer::reset() const
+void ByteBuffer::reset()
 {
     resetRead();
     resetWrite();
@@ -153,6 +153,19 @@ void ByteBuffer::resetRead() const
 void ByteBuffer::resetWrite() const
 {
     m_writeIndex = 0;
+}
+
+void ByteBuffer::resize(size_t sz)
+{
+    reset();
+
+    if (m_buffer) {
+        delete[] m_buffer;
+        m_buffer = nullptr;
+    }
+
+    m_bufferSz = sz;
+    m_buffer = new uint8_t[m_bufferSz]();
 }
 
 bool ByteBuffer::skipRead(const size_t N) const
@@ -184,6 +197,14 @@ uint8_t ByteBuffer::at(const size_t pos) const
     if (pos >= m_bufferSz) {
         return '\0';
     }
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunsafe-buffer-usage"
+    return m_buffer[pos];
+#pragma clang diagnostic pop
+}
+
+uint8_t &ByteBuffer::operator[](const size_t pos) const
+{
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wunsafe-buffer-usage"
     return m_buffer[pos];
@@ -384,21 +405,21 @@ bool ByteBuffer::readLine(std::string &data, const uint8_t *delimiters, size_t N
         N = 3;
     }
     constexpr size_t BLOCK_SZ = 64u;
-    uint8_t cache[BLOCK_SZ];
+    char cache[BLOCK_SZ];
     size_t index = 0;
-    size_t blockIndex = 0;
 
     data.clear();
-    data.resize(BLOCK_SZ);
-
-    auto ptr = data.data();
+    data.reserve(BLOCK_SZ);
 
     uint8_t b = 0;
     size_t trailedDelimiters = 0;
     while (read(b)) {
         bool isDelimiter = false;
         for (uint8_t k = 0; k < N; ++k) {
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunsafe-buffer-usage"
             if (delimiters[k] == b) {
+#pragma clang diagnostic pop
                 isDelimiter = true;
                 break;
             }
@@ -410,18 +431,19 @@ bool ByteBuffer::readLine(std::string &data, const uint8_t *delimiters, size_t N
                 --m_readIndex;
                 break;
             }
-            cache[index++] = b;
-            if (index >= BLOCK_SZ) {
-                mem_copy(ptr, BLOCK_SZ * blockIndex, cache, 0, BLOCK_SZ);
-                data.resize(BLOCK_SZ * (++blockIndex + 1));
-                ptr = data.data();
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunsafe-buffer-usage"
+            cache[index++] = static_cast<char>(b);
+#pragma clang diagnostic pop
+            if (index == BLOCK_SZ) {
+                data.append(cache, BLOCK_SZ);
                 index = 0;
             }
         }
     }
-    data.resize(BLOCK_SZ * blockIndex + index);
-    ptr = data.data();
-    mem_copy(ptr, BLOCK_SZ * blockIndex, cache, 0, index);
+    if (index) {
+        data.append(cache, index);
+    }
 
     return remainingLength() > 0;
 }

@@ -14,7 +14,7 @@ using namespace psi::test;
 
 TEST(aes_Tests, subWord)
 {
-    auto doTest = [](uint8_t word[4], const uint8_t expectedWord[4]) {
+    auto doTest = [](aes::DataWord4 &word, const uint8_t expectedWord[4]) {
         aes::subWord(word);
 
         for (uint8_t r = 0; r < 4; ++r) {
@@ -22,17 +22,17 @@ TEST(aes_Tests, subWord)
         }
     };
 
-    uint8_t word1[4u] = {0x00, 0x04, 0x08, 0x0c};
+    aes::DataWord4 word1 = {0x00, 0x04, 0x08, 0x0c};
     const uint8_t expectedWord1[4u] = {0x63, 0xf2, 0x30, 0xfe};
 
-    uint8_t word2[4u] = {0x10, 0x20, 0x30, 0x40};
+    aes::DataWord4 word2 = {0x10, 0x20, 0x30, 0x40};
     const uint8_t expectedWord2[4u] = {0xca, 0xb7, 0x04, 0x09};
 
     doTest(word1, expectedWord1);
     doTest(word2, expectedWord2);
 }
 
-void stringToBlock(const std::string &data, uint8_t (&block)[4][4])
+void stringToBlock(const std::string &data, aes::DataBlock16 &block)
 {
     if (data.size() != 32u) {
         return;
@@ -49,7 +49,7 @@ void stringToBlock(const std::string &data, uint8_t (&block)[4][4])
     }
 }
 
-std::string blockToString(const uint8_t block[4][4])
+std::string blockToString(const aes::DataBlock16 block)
 {
     std::ostringstream os;
 
@@ -95,7 +95,7 @@ TEST(aes_Tests, mixColumns)
 
 TEST(aes_Tests, applySubKey)
 {
-    uint8_t roundKey[16u] = {0xd0, 0x14, 0xf9, 0xa8, 0xc9, 0xee, 0x25, 0x89, 0xe1, 0x3f, 0x0c, 0xc8, 0xb6, 0x63, 0x0c, 0xa6};
+    aes::SubKey roundKey = {0xd0, 0x14, 0xf9, 0xa8, 0xc9, 0xee, 0x25, 0x89, 0xe1, 0x3f, 0x0c, 0xc8, 0xb6, 0x63, 0x0c, 0xa6};
     aes::DataBlock16 block;
     stringToBlock("e9317db5cb322c723d2e895faf090794", block);
 
@@ -130,10 +130,10 @@ TEST(aes_Tests, writeBlock)
 
 TEST(aes_Tests, readBlock)
 {
-    aes::DataBlock16 block {{0x00, 0x04, 0x08, 0x0c},
-                            {0x01, 0x05, 0x09, 0x0d},
-                            {0x02, 0x06, 0x0a, 0x0e},
-                            {0x03, 0x07, 0x0b, 0x0f}};
+    aes::DataBlock16 block {std::array<uint8_t, 4> {0x00, 0x04, 0x08, 0x0c},
+                            std::array<uint8_t, 4> {0x01, 0x05, 0x09, 0x0d},
+                            std::array<uint8_t, 4> {0x02, 0x06, 0x0a, 0x0e},
+                            std::array<uint8_t, 4> {0x03, 0x07, 0x0b, 0x0f}};
     uint8_t data[16] = {'\0'};
     aes::readBlock(block, data, 16);
 
@@ -157,7 +157,7 @@ TEST(aes_Tests, readBlock)
 
 TEST(aes_Tests, rotWord)
 {
-    uint8_t block[4] = {0x01, 0x02, 0x03, 0x04};
+    aes::DataWord4 block = {0x01, 0x02, 0x03, 0x04};
     aes::rotWord(block);
     ASSERT_EQ(block[0], 0x02);
     ASSERT_EQ(block[1], 0x03);
@@ -178,7 +178,7 @@ TEST(aes_Tests, generateSubKeys_impl_AES128)
                             true);
 
     const ByteBuffer key("2b7e151628aed2a6abf7158809cf4f3c", true);
-    aes::SubKey subKeys[11u] = {};
+    aes::SubKeys<11u> subKeys = {};
     aes::generateSubKeys_impl<4, 10>(key.data(), subKeys);
     ByteBuffer enhancedKey(16u * 11u);
     for (size_t i = 0; i < enhancedKey.size(); ++i) {
@@ -312,7 +312,7 @@ TEST(aes_Tests, generateSubKeys_impl_AES256)
         true);
 
     const ByteBuffer key("603deb1015ca71be2b73aef0857d77811f352c073b6108d72d9810a30914dff4", true);
-    aes::SubKey subKeys[15u] = {};
+    aes::SubKeys<15u> subKeys = {};
     aes::generateSubKeys_impl<8, 14>(key.data(), subKeys);
     ByteBuffer enhancedKey(16u * 15u);
     for (size_t i = 0; i < enhancedKey.size(); ++i) {
@@ -395,4 +395,17 @@ TEST(aes_Tests, decryptAes_impl_AES256)
         const auto decodedData = aes::decryptAes_impl<8, 14>(data, key);
         EXPECT_EQ(decodedData.asHexString(), "00112233445566778899aabbccddeeff");
     }
+}
+
+TEST(aes_Tests, performance)
+{
+    ByteBuffer key(32u);
+    key.writeHexString("000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f");
+
+    ByteBuffer data(47u);
+    data.writeHexString(
+        "00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff00112233445566778899aabbccddee");
+
+    TestHelper::timeFn(
+        "encryptAes_impl<8, 14>", [&]() { const auto encodedData = aes::encryptAes_impl<8, 14>(data, key); }, 100'000);
 }

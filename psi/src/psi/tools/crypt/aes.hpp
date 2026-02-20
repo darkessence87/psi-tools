@@ -48,39 +48,37 @@ ByteBuffer aes::encryptAes_impl(const ByteBuffer &inputData, const ByteBuffer &k
 }
 
 template <uint8_t Nk, uint8_t Nr>
-ByteBuffer aes::encryptAes_impl(const uint8_t *m_inData, size_t dataLen, const ByteBuffer &key)
+ByteBuffer aes::encryptAes_impl(const uint8_t *in, size_t dataLen, const ByteBuffer &key)
 {
     if (key.size() != Nk * 4u) {
         return {};
     }
 
-    key.reset();
-
     const uint8_t extraBytes = dataLen % 16u;
     ByteBuffer result(extraBytes == 0 ? dataLen : (dataLen + 16u - extraBytes + 1));
 
-    SubKey m_subKeys[Nr + 1u];
+    aes::SubKeys<Nr + 1u> m_subKeys;
     generateSubKeys_impl<Nk, Nr>(key.data(), m_subKeys);
 
-    auto m_outData = result.data();
+    auto *out = result.data();
 
     const size_t cycles = dataLen / 16u;
 
     // main cycles
     for (size_t cycleN = 0; cycleN < cycles; ++cycleN) {
         DataBlock16 block;
-        writeBlock(&m_inData[cycleN * 16u], 16u, block);
+        writeBlock(shift_ptr(in, cycleN * 16u), 16u, block);
         applySubKey(m_subKeys[0], block);
         for (uint8_t round = 1; round < Nr; ++round) {
             doRoundKeyEncode(m_subKeys[round], block);
         }
         doRoundKeyEncode(m_subKeys[Nr], block, true);
-        readBlock(block, &m_outData[cycleN * 16u], 16u);
+        readBlock(block, shift_ptr(out, cycleN * 16u), 16u);
     }
     // additional cycle
     if (extraBytes) {
         uint8_t lastChunk[16u] = {'\0'};
-        memcpy(lastChunk, &m_inData[dataLen - extraBytes], extraBytes);
+        mem_copy(lastChunk, 0, in, cycles * 16u, extraBytes);
 
         DataBlock16 block;
         writeBlock(lastChunk, 16u, block);
@@ -89,8 +87,8 @@ ByteBuffer aes::encryptAes_impl(const uint8_t *m_inData, size_t dataLen, const B
             doRoundKeyEncode(m_subKeys[round], block);
         }
         doRoundKeyEncode(m_subKeys[Nr], block, true);
-        readBlock(block, &m_outData[cycles * 16u], 16u);
-        memset(&m_outData[(cycles + 1) * 16u], uint8_t(extraBytes), 1);
+        readBlock(block, shift_ptr(out, cycles * 16u), 16u);
+        mem_set(out, (cycles + 1) * 16u, uint8_t(extraBytes), 1);
     }
 
     return result;
@@ -103,42 +101,40 @@ ByteBuffer aes::decryptAes_impl(const ByteBuffer &inputData, const ByteBuffer &k
 }
 
 template <uint8_t Nk, uint8_t Nr>
-ByteBuffer aes::decryptAes_impl(const uint8_t *m_inData, size_t dataLen, const ByteBuffer &key)
+ByteBuffer aes::decryptAes_impl(const uint8_t *in, size_t dataLen, const ByteBuffer &key)
 {
     if (key.size() != Nk * 4u) {
         return {};
     }
 
-    key.reset();
-
     // make data copy
     const uint8_t lenOffset = dataLen % 16u;
-    const uint8_t extraBytes = lenOffset ? m_inData[dataLen - 1] : 0;
+    const uint8_t extraBytes = lenOffset ? *shift_ptr(in, dataLen - 1) : 0;
     const size_t resultLen = lenOffset ? dataLen - 1 - 16u + extraBytes : dataLen;
     ByteBuffer result(resultLen);
 
-    SubKey m_subKeys[Nr + 1u];
+    aes::SubKeys<Nr + 1u> m_subKeys;
     generateSubKeys_impl<Nk, Nr>(key.data(), m_subKeys);
 
-    auto m_outData = result.data();
+    auto out = result.data();
 
     const size_t cycles = resultLen / 16u;
 
     // main cycles
     for (size_t cycleN = 0; cycleN < cycles; ++cycleN) {
         DataBlock16 block;
-        writeBlock(&m_inData[cycleN * 16u], 16u, block);
+        writeBlock(shift_ptr(in, cycleN * 16u), 16u, block);
         applySubKey(m_subKeys[Nr], block);
         for (uint8_t round = Nr - 1; round > 0; --round) {
             doRoundKeyDecode(m_subKeys[round], block);
         }
         doRoundKeyDecode(m_subKeys[0], block, true);
-        readBlock(block, &m_outData[cycleN * 16u], 16u);
+        readBlock(block, shift_ptr(out, cycleN * 16u), 16u);
     }
     // additional cycle
     if (extraBytes) {
         uint8_t lastChunk[16u] = {'\0'};
-        memcpy(lastChunk, &m_inData[dataLen - 1 - 16u], 16u);
+        mem_copy(lastChunk, 0, in, dataLen - 1 - 16u, 16u);
 
         DataBlock16 block;
         writeBlock(lastChunk, 16u, block);
@@ -147,28 +143,30 @@ ByteBuffer aes::decryptAes_impl(const uint8_t *m_inData, size_t dataLen, const B
             doRoundKeyDecode(m_subKeys[round], block);
         }
         doRoundKeyDecode(m_subKeys[0], block, true);
-        readBlock(block, &m_outData[cycles * 16u], extraBytes);
+        readBlock(block, shift_ptr(out, cycles * 16u), extraBytes);
     }
 
     return result;
 }
 
 template <uint8_t Nk, uint8_t Nr>
-void aes::generateSubKeys_impl(uint8_t key[Nk * 4u], SubKey subKeys[Nr + 1u])
+void aes::generateSubKeys_impl(uint8_t key[Nk * 4u], aes::SubKeys<Nr + 1u> &subKeys)
 {
     // (Nr + 1) * 4 rows, 4 cols
     constexpr uint8_t SUB_WORDS = (Nr + 1) * 4u;
-    uint8_t w[SUB_WORDS][4u];
-    memcpy(&w[0][0], key, Nk * 4u);
+    std::array<std::array<uint8_t, 4>, SUB_WORDS> w;
+    auto *w_base = &w[0][0];
+    auto *key_base = &key[0];
+    mem_copy(w_base, 0, key_base, 0, Nk * 4u);
 
     uint8_t i = Nk;
-    uint8_t temp[4u];
+    std::array<uint8_t, 4> temp;
     while (i < SUB_WORDS) {
-        memcpy(temp, w[i - 1u], 4u);
+        mem_copy(&temp[0], 0, w_base, (i - 1) * 4, 4u);
         if (i % Nk == 0u) {
             rotWord(temp);
             subWord(temp);
-            temp[0] ^= m_rCon[i / Nk - 1u];
+            temp[0] ^= *shift_ptr(&m_rCon[0], i / Nk - 1u);
         } else if constexpr (Nk > 6u) {
             if (i % Nk == 4u) {
                 subWord(temp);
@@ -181,13 +179,13 @@ void aes::generateSubKeys_impl(uint8_t key[Nk * 4u], SubKey subKeys[Nr + 1u])
     }
 
     for (uint8_t k = 0; k < Nr + 1u; ++k) {
-        memcpy(&subKeys[k], &w[k * 4u], 16u);
+        mem_copy(&subKeys[0], k, w_base, k * 16u, 16u);
     }
 }
 
 inline uint8_t mul2(uint8_t v)
 {
-    return (v << 1) ^ (0x1b & uint8_t(int8_t(v) >> 7));
+    return uint8_t(v << 1) ^ (0x1b & uint8_t(int8_t(v) >> 7));
 }
 
 inline uint8_t mul3(uint8_t a)
@@ -219,7 +217,7 @@ inline uint8_t mul14(uint8_t a)
     return mul2(c) ^ c ^ b;
 }
 
-const uint8_t aes::m_sBox[256u] = {
+const std::array<uint8_t, 256u> aes::m_sBox = {
     //0   1     2     3     4     5     6     7     8     9     a     b     c     d     e     f
     0x63, 0x7c, 0x77, 0x7b, 0xf2, 0x6b, 0x6f, 0xc5, 0x30, 0x01, 0x67, 0x2b, 0xfe, 0xd7, 0xab, 0x76, 0xca, 0x82, 0xc9,
     0x7d, 0xfa, 0x59, 0x47, 0xf0, 0xad, 0xd4, 0xa2, 0xaf, 0x9c, 0xa4, 0x72, 0xc0, 0xb7, 0xfd, 0x93, 0x26, 0x36, 0x3f,
@@ -236,7 +234,7 @@ const uint8_t aes::m_sBox[256u] = {
     0x69, 0xd9, 0x8e, 0x94, 0x9b, 0x1e, 0x87, 0xe9, 0xce, 0x55, 0x28, 0xdf, 0x8c, 0xa1, 0x89, 0x0d, 0xbf, 0xe6, 0x42,
     0x68, 0x41, 0x99, 0x2d, 0x0f, 0xb0, 0x54, 0xbb, 0x16};
 
-const uint8_t aes::m_iBox[256u] = {
+const std::array<uint8_t, 256u> aes::m_iBox = {
     //0   1     2     3     4     5     6     7     8     9     a     b     c     d     e     f
     0x52, 0x09, 0x6a, 0xd5, 0x30, 0x36, 0xa5, 0x38, 0xbf, 0x40, 0xa3, 0x9e, 0x81, 0xf3, 0xd7, 0xfb, 0x7c, 0xe3, 0x39,
     0x82, 0x9b, 0x2f, 0xff, 0x87, 0x34, 0x8e, 0x43, 0x44, 0xc4, 0xde, 0xe9, 0xcb, 0x54, 0x7b, 0x94, 0x32, 0xa6, 0xc2,
@@ -253,9 +251,9 @@ const uint8_t aes::m_iBox[256u] = {
     0xae, 0x2a, 0xf5, 0xb0, 0xc8, 0xeb, 0xbb, 0x3c, 0x83, 0x53, 0x99, 0x61, 0x17, 0x2b, 0x04, 0x7e, 0xba, 0x77, 0xd6,
     0x26, 0xe1, 0x69, 0x14, 0x63, 0x55, 0x21, 0x0c, 0x7d};
 
-const uint8_t aes::m_rCon[10u] = {0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80, 0x1b, 0x36};
+const std::array<uint8_t, 10u> aes::m_rCon = {0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80, 0x1b, 0x36};
 
-void aes::subBytes(const uint8_t box[256u], aes::DataBlock16 &block)
+void aes::subBytes(const std::array<uint8_t, 256u> &box, aes::DataBlock16 &block)
 {
     for (size_t k = 0; k < 16; ++k) {
         const size_t r = k / 4;
@@ -356,7 +354,7 @@ void aes::invMixColumns(aes::DataBlock16 &block)
     }
 }
 
-void aes::applySubKey(const uint8_t key[16u], aes::DataBlock16 &block)
+void aes::applySubKey(const SubKey &key, aes::DataBlock16 &block)
 {
     for (size_t k = 0; k < 16; ++k) {
         const size_t r = k / 4;
@@ -370,9 +368,12 @@ void aes::writeBlock(const uint8_t *const data, size_t dataSz, aes::DataBlock16 
     const size_t sz = dataSz > 16 ? 16 : dataSz;
     // swap rows and columns
     for (size_t k = 0; k < sz; ++k) {
-        const size_t r = k / 4;
-        const size_t c = k % 4;
+        const size_t r = k >> 2; // k / 4
+        const size_t c = k & 3;  // k % 4
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunsafe-buffer-usage"
         block[c][r] = data[k];
+#pragma clang diagnostic pop
     }
 }
 
@@ -381,13 +382,16 @@ void aes::readBlock(const aes::DataBlock16 &block, uint8_t *data, size_t dataSz)
     const size_t sz = dataSz > 16 ? 16 : dataSz;
     // swap rows and columns
     for (size_t k = 0; k < sz; ++k) {
-        const size_t r = k / 4;
-        const size_t c = k % 4;
+        const size_t r = k >> 2; // k / 4
+        const size_t c = k & 3;  // k % 4
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunsafe-buffer-usage"
         data[k] = block[c][r];
+#pragma clang diagnostic pop
     }
 }
 
-void aes::rotWord(uint8_t word[4])
+void aes::rotWord(DataWord4 &word)
 {
     uint8_t t = word[0];
     word[0] = word[1];
@@ -396,12 +400,21 @@ void aes::rotWord(uint8_t word[4])
     word[3] = t;
 }
 
-void aes::subWord(uint8_t word[4])
+void aes::subWord(DataWord4 &word)
 {
     word[0] = m_sBox[word[0]];
     word[1] = m_sBox[word[1]];
     word[2] = m_sBox[word[2]];
     word[3] = m_sBox[word[3]];
 };
+
+void aes::transpose(DataBlock16 &block)
+{
+    for (size_t i = 0; i < 4; ++i) {
+        for (size_t j = i + 1; j < 4; ++j) {
+            std::swap(block[i][j], block[j][i]);
+        }
+    }
+}
 
 } // namespace psi::tools::crypt

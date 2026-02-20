@@ -4,18 +4,19 @@
 
 namespace psi::tools::crypt {
 
-static const uint8_t _9[32] = {9};
+static constexpr std::array<uint8_t, 32> _9 = {9};
 const x25519::field_elem x25519::_121665 = {0xdb41, 1};
 
-void x25519::unpack25519(field_elem out, const uint8_t *in)
+void x25519::unpack25519(field_elem &out, const uint8_t *in)
 {
     for (uint8_t i = 0; i < 16; ++i) {
-        out[i] = in[2 * i] + ((int64_t)in[2 * i + 1] << 8);
+        out[i] = int64_t(in[0]) | (int64_t(*shift_ptr(in, 1)) << 8);
+        in = shift_ptr(in, 2);
     }
     out[15] &= 0x7fff;
 }
 
-void x25519::carry25519(field_elem elem)
+void x25519::carry25519(field_elem &elem)
 {
     int64_t carry = 0;
     for (uint8_t i = 0; i < 16; ++i) {
@@ -29,23 +30,26 @@ void x25519::carry25519(field_elem elem)
     }
 }
 
-void x25519::fadd(field_elem out, const field_elem a, const field_elem b) /* out = a + b */
+/* out = a + b */
+void x25519::fadd(field_elem &out, const field_elem &a, const field_elem &b)
 {
     for (uint8_t i = 0; i < 16; ++i) {
         out[i] = a[i] + b[i];
     }
 }
 
-void x25519::fsub(field_elem out, const field_elem a, const field_elem b) /* out = a - b */
+/* out = a - b */
+void x25519::fsub(field_elem &out, const field_elem &a, const field_elem &b)
 {
     for (uint8_t i = 0; i < 16; ++i) {
         out[i] = a[i] - b[i];
     }
 }
 
-void x25519::fmul(field_elem out, const field_elem a, const field_elem b) /* out = a * b */
+/* out = a * b */
+void x25519::fmul(field_elem &out, const field_elem &a, const field_elem &b)
 {
-    int64_t product[31];
+    std::array<int64_t, 31> product;
     for (uint8_t i = 0; i < 31; ++i) {
         product[i] = 0;
     }
@@ -64,7 +68,7 @@ void x25519::fmul(field_elem out, const field_elem a, const field_elem b) /* out
     carry25519(out);
 }
 
-void x25519::finverse(field_elem out, const field_elem in)
+void x25519::finverse(field_elem &out, const field_elem &in)
 {
     field_elem c;
     for (uint8_t i = 0; i < 16; ++i) {
@@ -81,7 +85,7 @@ void x25519::finverse(field_elem out, const field_elem in)
     }
 }
 
-void x25519::swap25519(field_elem p, field_elem q, int64_t bit)
+void x25519::swap25519(field_elem &p, field_elem &q, int64_t bit)
 {
     const int64_t c = ~(bit - 1);
     int64_t t;
@@ -92,7 +96,7 @@ void x25519::swap25519(field_elem p, field_elem q, int64_t bit)
     }
 }
 
-void x25519::pack25519(uint8_t *out, const field_elem in)
+void x25519::pack25519(uint8_t *out, const field_elem &in)
 {
     int carry;
     field_elem m, t;
@@ -114,28 +118,29 @@ void x25519::pack25519(uint8_t *out, const field_elem in)
         swap25519(t, m, 1 - carry);
     }
     for (uint8_t i = 0; i < 16; ++i) {
-        out[2 * i] = t[i] & 0xff;
-        out[2 * i + 1] = static_cast<uint8_t>(t[i] >> 8);
+        *out = t[i] & 0xff;
+        *shift_ptr(out, 1) = static_cast<uint8_t>(t[i] >> 8);
+        out = shift_ptr(out, 2);
     }
 }
 
 void x25519::scalarmult_base(uint8_t *out, const uint8_t *scalar)
 {
-    scalarmult(out, scalar, _9);
+    scalarmult(out, scalar, _9.data());
 }
 
 void x25519::generate_keypair(uint8_t *pk, uint8_t *sk)
 {
-    memcpy(sk, Encryptor::generateSessionKey().data(), 32u);
+    mem_copy(sk, 0, Encryptor::generateSessionKey().data(), 0, 32u);
     scalarmult_base(pk, sk);
 }
 
 void x25519::scalarmult(uint8_t *out, const uint8_t *scalar, const uint8_t *point)
 {
-    uint8_t clamped[32];
+    std::array<uint8_t, 32> clamped;
     field_elem a, b, c, d, e, f, x;
     for (uint8_t i = 0; i < 32; ++i) {
-        clamped[i] = scalar[i];
+        clamped[i] = *shift_ptr(scalar, i);
     }
     clamped[0] &= 0xf8;
     clamped[31] = (clamped[31] & 0x7f) | 0x40;
@@ -148,7 +153,7 @@ void x25519::scalarmult(uint8_t *out, const uint8_t *scalar, const uint8_t *poin
 
     int64_t bit;
     for (int16_t i = 254; i >= 0; --i) {
-        bit = (clamped[i >> 3] >> (i & 7)) & 1;
+        bit = (clamped[size_t(i) >> 3] >> (i & 7)) & 1;
         swap25519(a, b, bit);
         swap25519(c, d, bit);
         fadd(e, a, c);

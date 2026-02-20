@@ -5,20 +5,6 @@
  */
 #include "sha.h"
 
-#ifdef PSI_LOGGER
-#include "psi/logger/Logger.h"
-#else
-#include <iostream>
-#include <sstream>
-#define LOG_TRACE_STATIC(x)                                                                                            \
-    do {                                                                                                               \
-        std::ostringstream os;                                                                                         \
-        os << x;                                                                                                       \
-        std::cout << os.str() << std::endl;                                                                            \
-    } while (0)
-#define LOG_ERROR_STATIC(x) LOG_TRACE_STATIC(x)
-#endif
-
 namespace psi::tools::crypt {
 
 const uint32_t sha::K[64] = {0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5, 0x3956c25b, 0x59f111f1, 0x923f82a4,
@@ -56,11 +42,13 @@ ByteBuffer sha::padMessage(const ByteBuffer &data)
 
 void sha::prepareMessageSchedule(const uint8_t *block, uint32_t *w)
 {
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunsafe-buffer-usage"
     for (uint8_t i = 0; i < 16u; ++i) {
-        uint32_t a = *block++ << 24;
-        uint32_t b = *block++ << 16;
-        uint32_t c = *block++ << 8;
-        uint32_t d = *block++;
+        uint32_t a = uint32_t(*block++) << 24;
+        uint32_t b = uint32_t(*block++) << 16;
+        uint32_t c = uint32_t(*block++) << 8;
+        uint32_t d = uint32_t(*block++);
         w[i] = a | b | c | d;
     }
 
@@ -69,6 +57,7 @@ void sha::prepareMessageSchedule(const uint8_t *block, uint32_t *w)
         uint32_t s1 = rightRotate(w[i - 2], 17) ^ rightRotate(w[i - 2], 19) ^ (w[i - 2] >> 10);
         w[i] = w[i - 16] + s0 + w[i - 7] + s1;
     }
+#pragma clang diagnostic pop
 }
 
 uint32_t sha::rightRotate(uint32_t v, uint8_t n)
@@ -82,11 +71,13 @@ uint32_t sha::rightRotate(uint32_t v, uint8_t n)
 
 void sha::hashInit(uint32_t h[8u])
 {
-    memcpy(&h[0], &H[0], sizeof(H));
+    mem_copy(&h[0], 0, &H[0], 0, sizeof(H));
 }
 
 ByteBuffer sha::encode256(const ByteBuffer &data)
 {
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunsafe-buffer-usage"
     auto paddedData = padMessage(data);
 
     uint8_t dataBlock[64] = {};
@@ -128,6 +119,7 @@ ByteBuffer sha::encode256(const ByteBuffer &data)
         out.writeSwapped(hash[i]);
     }
 
+#pragma clang diagnostic pop
     return out;
 }
 
@@ -146,8 +138,8 @@ ByteBuffer sha::hmac256(const ByteBuffer &key, const ByteBuffer &data)
     ByteBuffer iKeyPad(INN_PAD, 64u);
     ByteBuffer oKeyPad(OUT_PAD, 64u);
     for (uint8_t i = 0; i < 64u; ++i) {
-        iKeyPad.data()[i] ^= paddedKey.data()[i];
-        oKeyPad.data()[i] ^= paddedKey.data()[i];
+        iKeyPad[i] ^= paddedKey.at(i);
+        oKeyPad[i] ^= paddedKey.at(i);
     }
 
     return encode256(oKeyPad + encode256(iKeyPad + data));

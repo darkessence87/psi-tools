@@ -2,12 +2,14 @@
 
 #include "psi/tools/ByteBuffer.h"
 
+#include <array>
+
 namespace psi::tools::crypt {
 
 class base64
 {
 public:
-    static const uint8_t m_base64Table[64u];
+    static const std::array<uint8_t, 64u> m_base64Table;
     static const uint8_t m_base64Pad;
 
     /**

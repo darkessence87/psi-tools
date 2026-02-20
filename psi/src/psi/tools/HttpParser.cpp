@@ -57,7 +57,7 @@ bool HttpParser::parseHttpFragment(const ByteBuffer &fragment, size_t &remaining
                 continue;
             }
 
-            remainingSz = line.empty() ? 0 : std::stoll(line, 0, 16);
+            remainingSz = line.empty() ? 0 : std::stoull(line, nullptr, 16);
             endOfData = remainingSz == 0;
             continue;
         }

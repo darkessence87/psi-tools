@@ -1,5 +1,6 @@
 #pragma once
 
+#include <array>
 #include <stdint.h>
 #include <string>
 #include <vector>
@@ -111,7 +112,7 @@ public:
      * This method does not change the data already written to buffer.
      * 
      */
-    void reset() const;
+    void reset();
 
     /**
      * @brief Set read index to default value. ByteBuffer might be read like after first creation.
@@ -126,6 +127,11 @@ public:
      * 
      */
     void resetWrite() const;
+
+    /**
+     * 
+     */
+    void resize(size_t sz);
 
     /**
      * @brief Write custom data into ByteBuffer.
@@ -308,8 +314,8 @@ public:
      * @param data reference to string data
      * @param delimiters list of delimiters. Default: {0x0a, 0x0d, 0x17}
      * @param N number of delimiters in list. Default: 0
-     * @return true if operation is successful, readIndex is increased by length of string
-     * @return false if operation is failed, readIndex is not changed
+     * @return true  if a delimiter was found
+     * @return false if end of buffer was reached before a delimiter
      */
     bool readLine(std::string &data, const uint8_t *delimiters = nullptr, size_t N = 0) const;
 
@@ -367,6 +373,11 @@ public:
     uint8_t at(const size_t pos) const;
 
     /**
+     * 
+     */
+    uint8_t& operator[](const size_t pos) const;
+
+    /**
      * @brief Return pointer to memory of buffer.
      * 
      * @return uint8_t* pointer to buffer's data
@@ -411,6 +422,19 @@ public:
     std::string asString() const;
 
     /**
+     * @brief Convert ByteBuffer to std::array
+     * 
+     * @return std::array<> array
+     */
+    template <typename T, size_t N>
+    std::array<T, N> asArray() const
+    {
+        std::array<T, N> data = {};
+        readBytes(data.data(), sizeof(T) * N);
+        return data;
+    }
+
+    /**
      * @brief Return size of ByteBuffer.
      * Size: memory allocated for buffer.
      * 
@@ -435,16 +459,6 @@ public:
     size_t remainingLength() const;
 
     struct ByteBuffer_Tests;
-
-private:
-    template <typename T1, typename T2>
-    inline void mem_copy(T1 *from, size_t from_offset, T2 *to, size_t to_offset, size_t sz) const
-    {
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wunsafe-buffer-usage"
-        std::memcpy(from + from_offset, to + to_offset, sz);
-#pragma clang diagnostic pop        
-    }
 
 private:
     size_t m_bufferSz = 0u;

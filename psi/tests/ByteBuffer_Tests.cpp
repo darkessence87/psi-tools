@@ -350,6 +350,32 @@ TEST(ByteBuffer_Tests, asString)
     EXPECT_EQ(expected, data.asString());
 }
 
+TEST(ByteBuffer_Tests, asArray)
+{
+    const size_t N = 13u;
+
+    ByteBuffer data(new uint8_t[N] {'a', 'b', '\u0023', 'd', '\0', '\7', 'g', '\n', '\r', '1', '\\', '\t', '4'}, N);
+    const auto test = data.asArray<uint8_t, 13>();
+
+    // 'a' = 0x61
+    // 'b' = 0x62
+    // 'c' = 0x63
+    // 'd' = 0x64
+    // 'e' = 0x65
+    // 'f' = 0x66
+    // 'g' = 0x67
+    // 'h' = 0x68
+    // '0' = 0x30
+    // '1' = 0x31
+    // '2' = 0x32
+    // '3' = 0x33
+    // '4' = 0x34
+    const std::array<uint8_t, 13> expected {'a', 'b', '\u0023', 'd', '\0', '\7', 'g', '\n', '\r', '1', '\\', '\t', '4'};
+    for (size_t index = 0; index < N; ++index) {
+        EXPECT_EQ(expected.at(index), test.at(index));
+    }
+}
+
 TEST(ByteBuffer_Tests, size)
 {
     const size_t N = 13u;
