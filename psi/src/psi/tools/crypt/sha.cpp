@@ -7,6 +7,10 @@
 
 namespace psi::tools::crypt {
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunsafe-buffer-usage-in-libc-call"
+#pragma clang diagnostic ignored "-Wunsafe-buffer-usage"
+
 const uint32_t sha::K[64] = {0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5, 0x3956c25b, 0x59f111f1, 0x923f82a4,
                              0xab1c5ed5, 0xd807aa98, 0x12835b01, 0x243185be, 0x550c7dc3, 0x72be5d74, 0x80deb1fe,
                              0x9bdc06a7, 0xc19bf174, 0xe49b69c1, 0xefbe4786, 0x0fc19dc6, 0x240ca1cc, 0x2de92c6f,
@@ -42,8 +46,6 @@ ByteBuffer sha::padMessage(const ByteBuffer &data)
 
 void sha::prepareMessageSchedule(const uint8_t *block, uint32_t *w)
 {
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wunsafe-buffer-usage"
     for (uint8_t i = 0; i < 16u; ++i) {
         uint32_t a = uint32_t(*block++) << 24;
         uint32_t b = uint32_t(*block++) << 16;
@@ -57,7 +59,6 @@ void sha::prepareMessageSchedule(const uint8_t *block, uint32_t *w)
         uint32_t s1 = rightRotate(w[i - 2], 17) ^ rightRotate(w[i - 2], 19) ^ (w[i - 2] >> 10);
         w[i] = w[i - 16] + s0 + w[i - 7] + s1;
     }
-#pragma clang diagnostic pop
 }
 
 uint32_t sha::rightRotate(uint32_t v, uint8_t n)
@@ -71,13 +72,11 @@ uint32_t sha::rightRotate(uint32_t v, uint8_t n)
 
 void sha::hashInit(uint32_t h[8u])
 {
-    mem_copy(&h[0], 0, &H[0], 0, sizeof(H));
+    std::memcpy(&h[0], &H[0], sizeof(H));
 }
 
 ByteBuffer sha::encode256(const ByteBuffer &data)
 {
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wunsafe-buffer-usage"
     auto paddedData = padMessage(data);
 
     uint8_t dataBlock[64] = {};
@@ -119,7 +118,6 @@ ByteBuffer sha::encode256(const ByteBuffer &data)
         out.writeSwapped(hash[i]);
     }
 
-#pragma clang diagnostic pop
     return out;
 }
 
@@ -181,5 +179,7 @@ ByteBuffer sha::hkdf256(const ByteBuffer &key, const ByteBuffer &seed, const Byt
     auto prk = hkdf256Extract(key, seed);
     return hkdf256Expand(prk, info, len);
 };
+
+#pragma clang diagnostic pop
 
 } // namespace psi::tools::crypt

@@ -80,8 +80,8 @@ TEST(ByteBuffer_Tests, ctor_LValuedData)
         EXPECT_EQ(data.size(), N);
         EXPECT_NE(data.data(), nullptr);
 
-        EXPECT_EQ(data.at(0), 'a');
-        EXPECT_EQ(data.at(1), 'b');
+        EXPECT_EQ(data.at(0), uint8_t('a'));
+        EXPECT_EQ(data.at(1), uint8_t('b'));
 
         EXPECT_EQ(ByteBuffer::ByteBuffer_Tests::readIndex(data), 0u);
         EXPECT_EQ(ByteBuffer::ByteBuffer_Tests::writeIndex(data), N);
@@ -118,8 +118,8 @@ TEST(ByteBuffer_Tests, ctor_copy)
         EXPECT_EQ(data2.size(), N);
         EXPECT_NE(data2.data(), data1.data());
 
-        EXPECT_EQ(data2.at(0), 'a');
-        EXPECT_EQ(data2.at(1), 'b');
+        EXPECT_EQ(data2.at(0), uint8_t('a'));
+        EXPECT_EQ(data2.at(1), uint8_t('b'));
 
         EXPECT_EQ(ByteBuffer::ByteBuffer_Tests::readIndex(data2), ByteBuffer::ByteBuffer_Tests::readIndex(data1));
         EXPECT_EQ(ByteBuffer::ByteBuffer_Tests::writeIndex(data2), ByteBuffer::ByteBuffer_Tests::writeIndex(data1));
@@ -133,8 +133,8 @@ TEST(ByteBuffer_Tests, ctor_copy)
         EXPECT_EQ(data2.size(), N);
         EXPECT_NE(data2.data(), data1.data());
 
-        EXPECT_EQ(data2.at(0), 'a');
-        EXPECT_EQ(data2.at(1), 'b');
+        EXPECT_EQ(data2.at(0), uint8_t('a'));
+        EXPECT_EQ(data2.at(1), uint8_t('b'));
 
         EXPECT_EQ(ByteBuffer::ByteBuffer_Tests::readIndex(data2), ByteBuffer::ByteBuffer_Tests::readIndex(data1));
         EXPECT_EQ(ByteBuffer::ByteBuffer_Tests::writeIndex(data2), ByteBuffer::ByteBuffer_Tests::writeIndex(data1));
@@ -154,9 +154,9 @@ TEST(ByteBuffer_Tests, ctor_copy_operator)
     EXPECT_EQ(data2.size(), N - 1);
     EXPECT_NE(data2.data(), data1.data());
 
-    EXPECT_EQ(data2.at(0), 'b');
-    EXPECT_EQ(data2.at(1), 'a');
-    EXPECT_EQ(data2.at(2), 'c');
+    EXPECT_EQ(data2.at(0), uint8_t('b'));
+    EXPECT_EQ(data2.at(1), uint8_t('a'));
+    EXPECT_EQ(data2.at(2), uint8_t('c'));
 
     EXPECT_EQ(ByteBuffer::ByteBuffer_Tests::readIndex(data2), ByteBuffer::ByteBuffer_Tests::readIndex(data1));
     EXPECT_EQ(ByteBuffer::ByteBuffer_Tests::writeIndex(data2), ByteBuffer::ByteBuffer_Tests::writeIndex(data1));
@@ -172,9 +172,9 @@ TEST(ByteBuffer_Tests, clear)
 
     data.clear();
 
-    EXPECT_EQ(data.at(0), '\0');
-    EXPECT_EQ(data.at(1), '\0');
-    EXPECT_EQ(data.at(2), '\0');
+    EXPECT_EQ(data.at(0), uint8_t('\0'));
+    EXPECT_EQ(data.at(1), uint8_t('\0'));
+    EXPECT_EQ(data.at(2), uint8_t('\0'));
     EXPECT_EQ(ByteBuffer::ByteBuffer_Tests::readIndex(data), 0u);
     EXPECT_EQ(ByteBuffer::ByteBuffer_Tests::writeIndex(data), 0u);
 }
@@ -189,9 +189,9 @@ TEST(ByteBuffer_Tests, reset)
 
     data.reset();
 
-    EXPECT_EQ(data.at(0), 'b');
-    EXPECT_EQ(data.at(1), 'a');
-    EXPECT_EQ(data.at(2), 'c');
+    EXPECT_EQ(data.at(0), uint8_t('b'));
+    EXPECT_EQ(data.at(1), uint8_t('a'));
+    EXPECT_EQ(data.at(2), uint8_t('c'));
     EXPECT_EQ(ByteBuffer::ByteBuffer_Tests::readIndex(data), 0u);
     EXPECT_EQ(ByteBuffer::ByteBuffer_Tests::writeIndex(data), 0u);
 }
@@ -229,9 +229,9 @@ TEST(ByteBuffer_Tests, at)
 
     ByteBuffer data(new uint8_t[N] {'b', 'a', 'c'}, N);
 
-    EXPECT_EQ(data.at(0), 'b');
-    EXPECT_EQ(data.at(1), 'a');
-    EXPECT_EQ(data.at(2), 'c');
+    EXPECT_EQ(data.at(0), uint8_t('b'));
+    EXPECT_EQ(data.at(1), uint8_t('a'));
+    EXPECT_EQ(data.at(2), uint8_t('c'));
 }
 
 TEST(ByteBuffer_Tests, data)
@@ -602,9 +602,9 @@ TEST(ByteBuffer_Tests, readArray)
     // read uint8_t[3], success
     uint8_t a[3];
     EXPECT_EQ(data.readArray(a), true);
-    EXPECT_EQ(a[0], '0');
-    EXPECT_EQ(a[1], '1');
-    EXPECT_EQ(a[2], '2');
+    EXPECT_EQ(a[0], uint8_t('0'));
+    EXPECT_EQ(a[1], uint8_t('1'));
+    EXPECT_EQ(a[2], uint8_t('2'));
     // read uint16_t[3], success
     uint16_t b[3];
     EXPECT_EQ(data.readArray(b), true);
@@ -622,11 +622,11 @@ TEST(ByteBuffer_Tests, readBytes)
     data1.writeString("123456789a");
     uint8_t data2[10];
     data1.readBytes(data2, 5);
-    EXPECT_EQ(data2[0], '1');
-    EXPECT_EQ(data2[1], '2');
-    EXPECT_EQ(data2[2], '3');
-    EXPECT_EQ(data2[3], '4');
-    EXPECT_EQ(data2[4], '5');
+    EXPECT_EQ(data2[0], uint8_t('1'));
+    EXPECT_EQ(data2[1], uint8_t('2'));
+    EXPECT_EQ(data2[2], uint8_t('3'));
+    EXPECT_EQ(data2[3], uint8_t('4'));
+    EXPECT_EQ(data2[4], uint8_t('5'));
 }
 
 TEST(ByteBuffer_Tests, readToByteBuffer_2)

@@ -23,6 +23,10 @@
 
 namespace psi::tools::crypt {
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunsafe-buffer-usage-in-libc-call"
+#pragma clang diagnostic ignored "-Wunsafe-buffer-usage"
+
 inline void rightshiftBlock(std::array<uint8_t, 16> &a)
 {
     for (size_t k = 15; k > 0; --k) {
@@ -41,10 +45,7 @@ void aes_gcm::xorBlocks(const DataBlock16 &a, const DataBlock16 &b, DataBlock16 
 void aes_gcm::xorBlocksInPlace(const uint8_t *src, DataBlock16 &dst)
 {
     for (size_t i = 0; i < 16u; ++i) {
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wunsafe-buffer-usage"
         dst[i] ^= src[i];
-#pragma clang diagnostic pop
     }
 }
 
@@ -109,13 +110,13 @@ void aes_gcm::ghashBlock(const DataBlock16 &h, const uint8_t *data, size_t dataL
 
     const size_t m = dataLen / 16u;
     for (size_t i = 0; i < m; ++i) {
-        xorBlocksInPlace(shift_ptr(data, i * 16u), temp);
+        xorBlocksInPlace(data + i * 16u, temp);
         gfMultBlock(temp, h, temp);
     }
 
     if (auto extra = dataLen % 16u) {
         DataBlock16 tempExtra = {};
-        mem_copy(tempExtra.data(), 0, data, m * 16u, extra);
+        std::memcpy(tempExtra.data(), data + m * 16u, extra);
 
         xorBlocksInPlace(tempExtra.data(), temp);
         gfMultBlock(temp, h, temp);
@@ -292,5 +293,7 @@ ByteBuffer aes_gcm::decrypt(const ByteBuffer &data, const ByteBuffer &key, const
 {
     return decrypt(data, key, {}, tag);
 }
+
+#pragma clang diagnostic pop
 
 } // namespace psi::tools::crypt

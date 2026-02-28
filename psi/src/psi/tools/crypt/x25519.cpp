@@ -4,14 +4,17 @@
 
 namespace psi::tools::crypt {
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunsafe-buffer-usage"
+
 static constexpr std::array<uint8_t, 32> _9 = {9};
 const x25519::field_elem x25519::_121665 = {0xdb41, 1};
 
 void x25519::unpack25519(field_elem &out, const uint8_t *in)
 {
     for (uint8_t i = 0; i < 16; ++i) {
-        out[i] = int64_t(in[0]) | (int64_t(*shift_ptr(in, 1)) << 8);
-        in = shift_ptr(in, 2);
+        out[i] = int64_t(in[0]) | (int64_t(*(in + 1)) << 8);
+        in = in + 2;
     }
     out[15] &= 0x7fff;
 }
@@ -119,8 +122,8 @@ void x25519::pack25519(uint8_t *out, const field_elem &in)
     }
     for (uint8_t i = 0; i < 16; ++i) {
         *out = t[i] & 0xff;
-        *shift_ptr(out, 1) = static_cast<uint8_t>(t[i] >> 8);
-        out = shift_ptr(out, 2);
+        *(out + 1) = static_cast<uint8_t>(t[i] >> 8);
+        out = out + 2;
     }
 }
 
@@ -131,7 +134,10 @@ void x25519::scalarmult_base(uint8_t *out, const uint8_t *scalar)
 
 void x25519::generate_keypair(uint8_t *pk, uint8_t *sk)
 {
-    mem_copy(sk, 0, Encryptor::generateSessionKey().data(), 0, 32u);
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunsafe-buffer-usage-in-libc-call"
+    std::memcpy(sk, Encryptor::generateSessionKey().data(), 32u);
+#pragma clang diagnostic pop
     scalarmult_base(pk, sk);
 }
 
@@ -140,7 +146,7 @@ void x25519::scalarmult(uint8_t *out, const uint8_t *scalar, const uint8_t *poin
     std::array<uint8_t, 32> clamped;
     field_elem a, b, c, d, e, f, x;
     for (uint8_t i = 0; i < 32; ++i) {
-        clamped[i] = *shift_ptr(scalar, i);
+        clamped[i] = *(scalar + i);
     }
     clamped[0] &= 0xf8;
     clamped[31] = (clamped[31] & 0x7f) | 0x40;
@@ -181,5 +187,7 @@ void x25519::scalarmult(uint8_t *out, const uint8_t *scalar, const uint8_t *poin
     fmul(a, a, c);
     pack25519(out, a);
 }
+
+#pragma clang diagnostic pop
 
 } // namespace psi::tools::crypt

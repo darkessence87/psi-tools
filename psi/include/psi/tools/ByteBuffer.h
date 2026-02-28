@@ -16,6 +16,9 @@ namespace psi::tools {
  */
 class ByteBuffer final
 {
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunsafe-buffer-usage-in-libc-call"
+#pragma clang diagnostic ignored "-Wunsafe-buffer-usage"
 public:
     /**
      * @brief Construct a new ByteBuffer object. Default size: 0 bytes.
@@ -150,7 +153,7 @@ public:
             return false;
         }
 
-        mem_copy(m_buffer, m_writeIndex, &data, 0, sz);
+        std::memcpy(m_buffer + m_writeIndex, &data, sz);
         m_writeIndex += sz;
 
         return true;
@@ -187,7 +190,7 @@ public:
             return false;
         }
 
-        mem_copy(&data, 0, m_buffer, m_readIndex, sz);
+        std::memcpy(&data, m_buffer + m_readIndex, sz);
         m_readIndex += sz;
 
         return true;
@@ -230,7 +233,7 @@ public:
             return false;
         }
 
-        mem_copy(m_buffer, m_writeIndex, data, 0, sz);
+        std::memcpy(m_buffer + m_writeIndex, data, sz);
         m_writeIndex += sz;
 
         return true;
@@ -253,7 +256,7 @@ public:
             return false;
         }
 
-        mem_copy(&data, 0, m_buffer, m_readIndex, sz);
+        std::memcpy(&data, m_buffer + m_readIndex, sz);
         m_readIndex += sz;
 
         return true;
@@ -274,7 +277,7 @@ public:
             return false;
         }
 
-        mem_copy(data, 0, m_buffer, m_readIndex, sz);
+        std::memcpy(data, m_buffer + m_readIndex, sz);
         m_readIndex += sz;
 
         return true;
@@ -465,6 +468,7 @@ private:
     uint8_t *m_buffer = nullptr;
     mutable size_t m_readIndex = 0u;
     mutable size_t m_writeIndex = 0u;
+#pragma clang diagnostic pop
 };
 
 } // namespace psi::tools

@@ -4,6 +4,9 @@
 
 namespace psi::tools {
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunsafe-buffer-usage"
+
 struct BitSet::BitSetImpl {
     BitSetImpl(size_t bitsNumber)
         : m_bitsNumber(bitsNumber)
@@ -37,18 +40,12 @@ static auto fill64(const uint8_t *data, size_t bytesNumber)
     bytesNumber = bytesNumber > 8 ? 8 : bytesNumber;
 
     if (bytesNumber == 8) {
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wunsafe-buffer-usage"
         std::memcpy(&value, data, 8);
-#pragma clang diagnostic pop
         return value;
     }
 
     for (size_t k = 0; k < bytesNumber; ++k) {
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wunsafe-buffer-usage"
         value |= uint64_t(data[k]) << (k * 8);
-#pragma clang diagnostic pop
     }
     return value;
 }
@@ -59,19 +56,13 @@ BitSet::BitSet(const uint8_t *data, size_t sz)
     // main chunks
     const auto mainChunksNumber = sz / 8;
     for (size_t i = 0; i < mainChunksNumber; ++i) {
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wunsafe-buffer-usage"
         m_value->m_value[i] = fill64(data + i * 8, 8);
-#pragma clang diagnostic pop
     }
 
     // last chunk
     const auto lastChunkSz = sz % 8;
     if (lastChunkSz) {
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wunsafe-buffer-usage"
         *m_value->m_value.rbegin() = fill64(data + mainChunksNumber * 8, lastChunkSz);
-#pragma clang diagnostic pop
     }
 }
 
@@ -86,10 +77,7 @@ static auto fill64Bin(const uint8_t *data, size_t bitsNumber)
     bitsNumber = bitsNumber > 64 ? 64 : bitsNumber;
 
     for (size_t k = 0; k < bitsNumber; ++k) {
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wunsafe-buffer-usage"
         uint8_t c = data[k];
-#pragma clang diagnostic pop
         if (c == '1') {
             value |= 1ull << k;
         } else if (c != '0') {
@@ -107,19 +95,13 @@ BitSet::BitSet(const std::string &bits)
     // main chunks
     const auto mainChunksNumber = bits.size() / 64;
     for (size_t i = 0; i < mainChunksNumber; ++i) {
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wunsafe-buffer-usage"
         m_value->m_value[i] = fill64Bin(ptr + i * 64, 64);
-#pragma clang diagnostic pop
     }
 
     // last chunk
     const auto lastChunkSz = bits.size() % 64;
     if (lastChunkSz) {
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wunsafe-buffer-usage"
         *m_value->m_value.rbegin() = fill64Bin(ptr + mainChunksNumber * 64, lastChunkSz);
-#pragma clang diagnostic pop
     }
 }
 
@@ -221,5 +203,7 @@ const std::string BitSet::toString() const
 
     return result;
 }
+
+#pragma clang diagnostic pop
 
 } // namespace psi::tools

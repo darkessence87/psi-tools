@@ -18,6 +18,10 @@
 
 namespace psi::tools {
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunsafe-buffer-usage-in-libc-call"
+#pragma clang diagnostic ignored "-Wunsafe-buffer-usage"
+
 ByteBuffer::ByteBuffer()
     : m_bufferSz(0u)
     , m_buffer(new uint8_t[m_bufferSz]())
@@ -67,7 +71,7 @@ ByteBuffer::ByteBuffer(const ByteBuffer &bb)
     , m_readIndex(bb.m_readIndex)
     , m_writeIndex(bb.m_writeIndex)
 {
-    mem_copy(m_buffer, 0, bb.m_buffer, 0, m_bufferSz);
+    std::memcpy(m_buffer, bb.m_buffer, m_bufferSz);
 }
 
 ByteBuffer::~ByteBuffer()
@@ -91,7 +95,7 @@ ByteBuffer &ByteBuffer::operator=(const ByteBuffer &bb)
 
     m_bufferSz = bb.size();
     m_buffer = new uint8_t[m_bufferSz]();
-    mem_copy(m_buffer, 0, bb.m_buffer, 0, m_bufferSz);
+    std::memcpy(m_buffer, bb.m_buffer, m_bufferSz);
 
     m_readIndex = bb.m_readIndex;
     m_writeIndex = bb.m_writeIndex;
@@ -105,7 +109,7 @@ ByteBuffer &ByteBuffer::operator+=(const ByteBuffer &bb)
     auto newBuffer = new uint8_t[newBufferSz]();
 
     if (m_buffer) {
-        mem_copy(newBuffer, 0, m_buffer, 0, m_bufferSz);
+        std::memcpy(newBuffer, m_buffer, m_bufferSz);
 
         delete[] m_buffer;
         m_buffer = nullptr;
@@ -132,10 +136,7 @@ ByteBuffer ByteBuffer::operator+(const ByteBuffer &bb) const
 
 void ByteBuffer::clear()
 {
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wunsafe-buffer-usage"
     std::memset(m_buffer, 0, m_bufferSz);
-#pragma clang diagnostic pop
     reset();
 }
 
@@ -197,18 +198,12 @@ uint8_t ByteBuffer::at(const size_t pos) const
     if (pos >= m_bufferSz) {
         return '\0';
     }
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wunsafe-buffer-usage"
     return m_buffer[pos];
-#pragma clang diagnostic pop
 }
 
 uint8_t &ByteBuffer::operator[](const size_t pos) const
 {
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wunsafe-buffer-usage"
     return m_buffer[pos];
-#pragma clang diagnostic pop
 }
 
 uint8_t *ByteBuffer::data() const
@@ -224,7 +219,7 @@ std::vector<uint8_t> ByteBuffer::asVector() const
 {
     std::vector<uint8_t> result;
     result.resize(m_bufferSz);
-    mem_copy(&result[0], 0, m_buffer, 0, m_bufferSz);
+    std::memcpy(&result[0], m_buffer, m_bufferSz);
     return result;
 }
 
@@ -235,8 +230,6 @@ std::vector<uint64_t> ByteBuffer::asHash() const
     std::vector<uint64_t> result;
     result.reserve(blocks + (remain ? 1 : 0));
 
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wunsafe-buffer-usage"
     const uint8_t *ptr = m_buffer;
 
     for (size_t b = 0; b < blocks; ++b) {
@@ -255,7 +248,6 @@ std::vector<uint64_t> ByteBuffer::asHash() const
         }
         result.emplace_back(v);
     }
-#pragma clang diagnostic pop
 
     return result;
 }
@@ -270,8 +262,6 @@ std::string ByteBuffer::asHexStringFormatted() const
     std::string result;
     result.resize(m_bufferSz * 3 + 3);
 
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wunsafe-buffer-usage"
     char *dst = result.data();
     size_t index = 0;
     dst[index++] = '[';
@@ -283,7 +273,6 @@ std::string ByteBuffer::asHexStringFormatted() const
         dst[index++] = ' ';
     }
     dst[index++] = ']';
-#pragma clang diagnostic pop
 
     return result;
 }
@@ -294,10 +283,7 @@ std::string ByteBuffer::asString() const
     result.reserve(m_bufferSz);
 
     for (size_t i = 0; i < m_bufferSz; ++i) {
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wunsafe-buffer-usage"
         const uint8_t c = m_buffer[i];
-#pragma clang diagnostic pop
         if ((c >= 0x20 && c <= 0x7e) || c == '\n' || c == '\t' || c == '\r') {
             result.push_back(static_cast<char>(c));
         }
@@ -330,7 +316,7 @@ bool ByteBuffer::writeString(const std::string &data)
         return false;
     }
 
-    mem_copy(&m_buffer[0], m_writeIndex, &data[0], 0, sz);
+    std::memcpy(m_buffer + m_writeIndex, &data[0], sz);
     m_writeIndex += sz;
 
     return true;
@@ -371,10 +357,7 @@ bool ByteBuffer::writeHexString(const std::string &data)
     for (size_t i = 0; i < input_sz; i += 2) {
         const uint8_t hi = s_stoul_lookup_table[static_cast<uint8_t>(data[i])];
         const uint8_t lo = s_stoul_lookup_table[static_cast<uint8_t>(data[i + 1])];
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wunsafe-buffer-usage"
         m_buffer[m_writeIndex++] = uint8_t(hi << 4) | lo;
-#pragma clang diagnostic pop
     }
 
     return true;
@@ -391,7 +374,7 @@ bool ByteBuffer::readString(std::string &data, const size_t N) const
 
     data.clear();
     data.resize(sz);
-    mem_copy(&data[0], 0, &m_buffer[0], m_readIndex, sz);
+    std::memcpy(&data[0], m_buffer + m_readIndex, sz);
     m_readIndex += sz;
 
     return true;
@@ -416,10 +399,7 @@ bool ByteBuffer::readLine(std::string &data, const uint8_t *delimiters, size_t N
     while (read(b)) {
         bool isDelimiter = false;
         for (uint8_t k = 0; k < N; ++k) {
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wunsafe-buffer-usage"
             if (delimiters[k] == b) {
-#pragma clang diagnostic pop
                 isDelimiter = true;
                 break;
             }
@@ -431,10 +411,7 @@ bool ByteBuffer::readLine(std::string &data, const uint8_t *delimiters, size_t N
                 --m_readIndex;
                 break;
             }
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wunsafe-buffer-usage"
             cache[index++] = static_cast<char>(b);
-#pragma clang diagnostic pop
             if (index == BLOCK_SZ) {
                 data.append(cache, BLOCK_SZ);
                 index = 0;
@@ -458,7 +435,7 @@ ByteBuffer ByteBuffer::readToByteBuffer(const size_t N) const
     }
 
     uint8_t *temp = new uint8_t[sz]();
-    mem_copy(temp, 0, &m_buffer[0], m_readIndex, sz);
+    std::memcpy(temp, m_buffer + m_readIndex, sz);
     m_readIndex += sz;
 
     return ByteBuffer(std::move(*temp), sz);
@@ -479,10 +456,7 @@ bool ByteBuffer::readToByteBuffer(ByteBuffer &buffer, const size_t N) const
         return false;
     }
 
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wunsafe-buffer-usage"
     readBytes(buffer.m_buffer + buffer.m_writeIndex, sz);
-#pragma clang diagnostic pop
     buffer.m_writeIndex += sz;
 
     return true;
@@ -503,13 +477,12 @@ bool ByteBuffer::readToByteBuffer(ByteBuffer &buffer) const
         return false;
     }
 
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wunsafe-buffer-usage"
     readBytes(buffer.m_buffer + buffer.m_writeIndex, sz);
-#pragma clang diagnostic pop
     buffer.m_writeIndex += sz;
 
     return true;
 }
+
+#pragma clang diagnostic pop
 
 } // namespace psi::tools
