@@ -1,8 +1,3 @@
-include_directories(
-    include
-    src
-)
-
 set (SOURCES
     src/psi/tools/crypt/aes_gcm.cpp
     src/psi/tools/crypt/aes.cpp
@@ -20,6 +15,16 @@ set (SOURCES
 set (target_lib "psi-tools")
 
 add_library(${target_lib} ${SOURCES})
+add_library(psi::tools ALIAS ${target_lib})
+
+target_include_directories(${target_lib}
+    PUBLIC
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+        $<INSTALL_INTERFACE:include>
+    PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/src
+)
+
 psi_config_target(${target_lib})
 
 set(TEST_SRC
@@ -36,6 +41,11 @@ set(TEST_SRC
     tests/Tools_Tests.cpp
 )
 psi_make_tests("Tools" "${TEST_SRC}" "${target_lib}")
+
+# Tests need access to private headers under src/ (e.g. psi/tools/crypt/*.h)
+if(TARGET PSI_TEST_Tools)
+    target_include_directories(PSI_TEST_Tools PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+endif()
 
 psi_make_examples("1_ToolsExamples" "examples/1_ToolsExamples.cpp" "${target_lib}")
 psi_make_examples("2_ByteBufferExamples" "examples/2_ByteBufferExamples.cpp" "${target_lib}")
