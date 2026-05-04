@@ -48,7 +48,7 @@ TEST(aes_gcm_Tests, encrypt)
         // SCOPED_TRACE("// case 1.");
 
         const ByteBuffer key("00000000000000000000000000000000", true);
-        const ByteBuffer data("");
+        const ByteBuffer data(std::string{});
         ByteBuffer iv(16);
         iv.writeHexString("000000000000000000000000");
 
@@ -56,7 +56,7 @@ TEST(aes_gcm_Tests, encrypt)
         ByteBuffer encodedData = aes_gcm::encrypt(data, key, iv, tag);
         ByteBuffer tagBuffer(16);
         tagBuffer.write(tag);
-        EXPECT_EQ(encodedData.asHexString(), "");
+        EXPECT_EQ(encodedData.asHexString(), std::string{});
         EXPECT_EQ(tagBuffer.asHexString(), "58e2fccefa7e3061367f1d57a4e7455a");
     }
 
@@ -159,13 +159,13 @@ TEST(aes_gcm_Tests, decrypt)
         // SCOPED_TRACE("// case 1.");
 
         const ByteBuffer key("00000000000000000000000000000000", true);
-        const ByteBuffer encodedData("");
+        const ByteBuffer encodedData(std::string{});
         ByteBuffer iv(16);
         iv.writeHexString("000000000000000000000000");
         const ByteBuffer tag("58e2fccefa7e3061367f1d57a4e7455a", true);
 
         ByteBuffer decodedData = aes_gcm::decrypt(encodedData, key, iv, tag);
-        EXPECT_EQ(decodedData.asHexString(), "");
+        EXPECT_EQ(decodedData.asHexString(), std::string{});
     }
 
     {

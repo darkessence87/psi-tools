@@ -458,14 +458,14 @@ TEST(ByteBuffer_Tests, readLine)
         EXPECT_EQ(lines, expected);
     };
 
-    doTest("case 1. Header delimiter", "0d616263", {"", "abc"});
+    doTest("case 1. Header delimiter", "0d616263", {std::string{}, "abc"});
     doTest("case 2. Trailed delimiter", "6162630a", {"abc"});
-    doTest("case 3. Trailed delimiters", "0d61620d170a630a", {"", "ab", "c"});
+    doTest("case 3. Trailed delimiters", "0d61620d170a630a", {std::string{}, "ab", "c"});
     doTest("case 4. Middle delimiter", "61620d63", {"ab", "c"});
-    doTest("case 5. Mixed delimiters", "0d61620d630d", {"", "ab", "c"});
+    doTest("case 5. Mixed delimiters", "0d61620d630d", {std::string{}, "ab", "c"});
     doTest("case 6. No delimiters", "616263", {"abc"});
     doTest("case 7. Only delimiters", "0a0d", {});
-    doTest("case 8. Empty buffer", "", {});
+    doTest("case 8. Empty buffer", std::string{}, {});
     doTest("case 9. Custom delimiters", "6162636465666768", {"a", "c", "e", "g"}, {0x62, 0x64, 0x66, 0x68});
 }
 
