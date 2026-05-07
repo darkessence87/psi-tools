@@ -53,7 +53,7 @@ TEST(BitSetTests, test)
 
 TEST(BitSetTests, inverse)
 {
-    auto doTest = [](const auto &testCaseName, const auto &bits, const auto &expected) {
+    auto doTest = [](const auto & /*testCaseName*/, const auto &bits, const auto &expected) {
         // SCOPED_TRACE(testCaseName);
 
         BitSet data(bits);
@@ -80,7 +80,7 @@ TEST(BitSetTests, inverse)
 
 TEST(BitSetTests, reverse)
 {
-    auto doTest = [](const auto &testCaseName, const auto &bits, const auto &expected) {
+    auto doTest = [](const auto & /*testCaseName*/, const auto &bits, const auto &expected) {
         // SCOPED_TRACE(testCaseName);
 
         BitSet data(bits);

@@ -9,7 +9,7 @@ using namespace psi::test;
 
 TEST(aes_gcm_Tests, gfMultBlock)
 {
-    auto doTest = [](const auto &testCase, const auto &x, const auto &y, const auto &expected) {
+    auto doTest = [](const auto & /*testCase*/, const auto &x, const auto &y, const auto &expected) {
         // SCOPED_TRACE(testCase);
 
         aes_gcm::DataBlock16 xBuffer = ByteBuffer(x, true).asArray<uint8_t,16>();
@@ -248,7 +248,7 @@ TEST(aes_gcm_Tests, decrypt)
 
 TEST(aes_gcm_Tests, encrypt_decrypt)
 {
-    auto doTest = [](const auto &testCase, const auto &d, const auto &k, const auto &i) {
+    auto doTest = [](const auto & /*testCase*/, const auto &d, const auto &k, const auto &i) {
         // SCOPED_TRACE(testCase);
 
         ByteBuffer data(d, true);

@@ -10,7 +10,7 @@ using namespace psi::test;
 
 TEST(x25519_Tests, scalarmult_base)
 {
-    auto doTest = [](const auto &testCaseName, const auto &privateKey, const auto &expectedKey) {
+    auto doTest = [](const auto & /*testCaseName*/, const auto &privateKey, const auto &expectedKey) {
         // SCOPED_TRACE(testCaseName);
 
         ByteBuffer privateKeyBuffer(privateKey, true);
@@ -36,7 +36,7 @@ TEST(x25519_Tests, scalarmult_base)
 
 TEST(x25519_Tests, scalarmult)
 {
-    auto doTest = [](const auto &testCaseName, const auto &privateKey, const auto &publicKey, const auto &expectedKey) {
+    auto doTest = [](const auto & /*testCaseName*/, const auto &privateKey, const auto &publicKey, const auto &expectedKey) {
         // SCOPED_TRACE(testCaseName);
 
         ByteBuffer privateKeyBuffer(privateKey, true);

@@ -18,7 +18,10 @@ TEST(aes_Tests, subWord)
         aes::subWord(word);
 
         for (uint8_t r = 0; r < 4; ++r) {
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunsafe-buffer-usage"
             EXPECT_EQ(expectedWord[r], word[r]);
+#pragma clang diagnostic pop
         }
     };
 
@@ -32,7 +35,7 @@ TEST(aes_Tests, subWord)
     doTest(word2, expectedWord2);
 }
 
-void stringToBlock(const std::string &data, aes::DataBlock16 &block)
+static void stringToBlock(const std::string &data, aes::DataBlock16 &block)
 {
     if (data.size() != 32u) {
         return;
@@ -49,7 +52,7 @@ void stringToBlock(const std::string &data, aes::DataBlock16 &block)
     }
 }
 
-std::string blockToString(const aes::DataBlock16 block)
+static std::string blockToString(const aes::DataBlock16 block)
 {
     std::ostringstream os;
 

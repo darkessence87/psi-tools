@@ -46,7 +46,7 @@ TEST(BigInteger_Tests, ctor_vector)
 
 TEST(BigInteger_Tests, operator_plus_BigInteger)
 {
-    auto doTest = [](const auto &testCaseName, const auto &data1, const auto &data2, const std::vector<uint64_t> &expected) {
+    auto doTest = [](const auto & /*testCaseName*/, const auto &data1, const auto &data2, const std::vector<uint64_t> &expected) {
         // SCOPED_TRACE(testCaseName);
 
         BigInteger data3 = data1 + data2;
@@ -77,10 +77,10 @@ TEST(BigInteger_Tests, operator_plus_BigInteger)
 
 TEST(BigInteger_Tests, operator_plus_uint64_t)
 {
-    auto doTest = [](const auto &testCaseName, const auto &data1, const auto &data2, const std::vector<uint64_t> &expected) {
+    auto doTest = [](const auto & /*testCaseName*/, const auto &data1, const auto &data2, const std::vector<uint64_t> &expected) {
         // SCOPED_TRACE(testCaseName);
 
-        BigInteger data3 = data1 + data2;
+        BigInteger data3 = data1 + static_cast<uint64_t>(data2);
         ASSERT_EQ(BigInteger::BigInteger_Tests::readValue(data3).size(), expected.size());
         for (size_t i = 0; i < expected.size(); ++i) {
             EXPECT_EQ(BigInteger::BigInteger_Tests::readValue(data3)[i], expected[i]);
@@ -97,7 +97,7 @@ TEST(BigInteger_Tests, operator_plus_uint64_t)
 
 TEST(BigInteger_Tests, operator_plus_equal_BigInteger)
 {
-    auto doTest = [](const auto &testCaseName, auto &&data1, const auto &data2, const std::vector<uint64_t> &expected) {
+    auto doTest = [](const auto & /*testCaseName*/, auto &&data1, const auto &data2, const std::vector<uint64_t> &expected) {
         // SCOPED_TRACE(testCaseName);
 
         data1 += data2;
@@ -128,10 +128,10 @@ TEST(BigInteger_Tests, operator_plus_equal_BigInteger)
 
 TEST(BigInteger_Tests, operator_plus_equal_uint64_t)
 {
-    auto doTest = [](const auto &testCaseName, auto &&data1, const auto &data2, const std::vector<uint64_t> &expected) {
+    auto doTest = [](const auto & /*testCaseName*/, auto &&data1, const auto &data2, const std::vector<uint64_t> &expected) {
         // SCOPED_TRACE(testCaseName);
 
-        data1 += data2;
+        data1 += static_cast<uint64_t>(data2);
         ASSERT_EQ(BigInteger::BigInteger_Tests::readValue(data1).size(), expected.size());
         for (size_t i = 0; i < expected.size(); ++i) {
             EXPECT_EQ(BigInteger::BigInteger_Tests::readValue(data1)[i], expected[i]);
@@ -148,7 +148,7 @@ TEST(BigInteger_Tests, operator_plus_equal_uint64_t)
 
 TEST(BigInteger_Tests, operator_minus_BigInteger)
 {
-    auto doTest = [](const auto &testCaseName, const auto &data1, const auto &data2, const std::vector<uint64_t> &expected) {
+    auto doTest = [](const auto & /*testCaseName*/, const auto &data1, const auto &data2, const std::vector<uint64_t> &expected) {
         // SCOPED_TRACE(testCaseName);
 
         BigInteger data3 = data1 - data2;
@@ -189,10 +189,10 @@ TEST(BigInteger_Tests, operator_minus_BigInteger)
 
 TEST(BigInteger_Tests, operator_minus_uint64_t)
 {
-    auto doTest = [](const auto &testCaseName, const auto &data1, const auto &data2, const std::vector<uint64_t> &expected) {
+    auto doTest = [](const auto & /*testCaseName*/, const auto &data1, const auto &data2, const std::vector<uint64_t> &expected) {
         // SCOPED_TRACE(testCaseName);
 
-        BigInteger data3 = data1 - data2;
+        BigInteger data3 = data1 - static_cast<uint64_t>(data2);
         ASSERT_EQ(BigInteger::BigInteger_Tests::readValue(data3).size(), expected.size());
         for (size_t i = 0; i < expected.size(); ++i) {
             EXPECT_EQ(BigInteger::BigInteger_Tests::readValue(data3)[i], expected[i]);
@@ -208,7 +208,7 @@ TEST(BigInteger_Tests, operator_minus_uint64_t)
 
 TEST(BigInteger_Tests, operator_minus_equal_BigInteger)
 {
-    auto doTest = [](const auto &testCaseName, auto &&data1, const auto &data2, const std::vector<uint64_t> &expected) {
+    auto doTest = [](const auto & /*testCaseName*/, auto &&data1, const auto &data2, const std::vector<uint64_t> &expected) {
         // SCOPED_TRACE(testCaseName);
 
         data1 -= data2;
@@ -249,10 +249,10 @@ TEST(BigInteger_Tests, operator_minus_equal_BigInteger)
 
 TEST(BigInteger_Tests, operator_minus_equal_uint64_t)
 {
-    auto doTest = [](const auto &testCaseName, auto &&data1, const auto &data2, const std::vector<uint64_t> &expected) {
+    auto doTest = [](const auto & /*testCaseName*/, auto &&data1, const auto &data2, const std::vector<uint64_t> &expected) {
         // SCOPED_TRACE(testCaseName);
 
-        data1 -= data2;
+        data1 -= static_cast<uint64_t>(data2);
         ASSERT_EQ(BigInteger::BigInteger_Tests::readValue(data1).size(), expected.size());
         for (size_t i = 0; i < expected.size(); ++i) {
             EXPECT_EQ(BigInteger::BigInteger_Tests::readValue(data1)[i], expected[i]);
@@ -269,7 +269,7 @@ TEST(BigInteger_Tests, operator_minus_equal_uint64_t)
 TEST(BigInteger_Tests, add)
 {
     auto doTest =
-        [](const auto &testCaseName, auto &&data, uint64_t value, uint64_t index, const std::vector<uint64_t> &expected) {
+        [](const auto & /*testCaseName*/, auto &&data, uint64_t value, uint64_t index, const std::vector<uint64_t> &expected) {
             // SCOPED_TRACE(testCaseName);
 
             data.add(value, index);
@@ -296,7 +296,7 @@ TEST(BigInteger_Tests, add)
 TEST(BigInteger_Tests, substract)
 {
     auto doTest =
-        [](const auto &testCaseName, auto &&data, uint64_t value, uint64_t index, const std::vector<uint64_t> &expected) {
+        [](const auto & /*testCaseName*/, auto &&data, uint64_t value, uint64_t index, const std::vector<uint64_t> &expected) {
             // SCOPED_TRACE(testCaseName);
 
             data.substract(value, index);
