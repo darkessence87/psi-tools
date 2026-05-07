@@ -14,7 +14,7 @@ TEST(HttpParserTests, parseHttpChunkedMessage)
         {"TRANSFER-ENCODING", "chunked"},
         {"CONNECTION", "keep-alive"},
     };
-    auto doTest = [&](const auto &testCaseName,
+    auto doTest = [&](const auto & /*testCaseName*/,
                       const auto &msg,
                       const auto &expectedData,
                       const size_t expectedRemainingSz,
@@ -66,7 +66,7 @@ TEST(HttpParserTests, parseHttpChunkedMessage)
 
 TEST(HttpParserTests, parseHttpFragment)
 {
-    auto doTest = [](const auto &testCaseName,
+    auto doTest = [](const auto & /*testCaseName*/,
                      const auto &fragmentData,
                      const auto &originRemainingSz,
                      const auto &expectedData,
@@ -75,7 +75,7 @@ TEST(HttpParserTests, parseHttpFragment)
         // SCOPED_TRACE(testCaseName);
 
         const ByteBuffer fragment(fragmentData);
-        size_t remainingSz = originRemainingSz;
+        size_t remainingSz = static_cast<size_t>(originRemainingSz);
 
         std::ostringstream data;
         EXPECT_EQ(expectedEndData, HttpParser::parseHttpFragment(fragment, remainingSz, data));
@@ -132,7 +132,7 @@ TEST(HttpParserTests, parseHttpFragment)
 
 TEST(HttpParserTests, skipToHttpData)
 {
-    auto doTest = [&](const auto &testCaseName, const auto &msg, const auto &expectedMsg) {
+    auto doTest = [&](const auto & /*testCaseName*/, const auto &msg, const auto &expectedMsg) {
         // SCOPED_TRACE(testCaseName);
 
         const ByteBuffer request(msg);
