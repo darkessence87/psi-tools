@@ -70,7 +70,7 @@ public:
     BigInteger &operator+=(uint64_t i);
 
     /**
-     * @brief Substract input value from current value.
+     * @brief Subtract input value from current value.
      * New object returned.
      * 
      * @param i BigInteger input value
@@ -79,7 +79,7 @@ public:
     BigInteger operator-(const BigInteger &i) const;
 
     /**
-     * @brief Substract input value from current value.
+     * @brief Subtract input value from current value.
      * New object returned.
      * 
      * @param i uint64_t input value
@@ -88,7 +88,7 @@ public:
     BigInteger operator-(uint64_t i) const;
 
     /**
-     * @brief Substract input value from current value.
+     * @brief Subtract input value from current value.
      * Modified object returned.
      * 
      * @param i BigInteger input value
@@ -97,7 +97,7 @@ public:
     BigInteger &operator-=(const BigInteger &i);
 
     /**
-     * @brief Substract input value from current value.
+     * @brief Subtract input value from current value.
      * Modified object returned.
      * 
      * @param i uint64_t input value
@@ -107,25 +107,25 @@ public:
 
     /**
      * @brief Represent BigInteger object as string.
-     * Format: "higher_bit mid_bit lower_bit ".
+     * Format: each 64-bit word printed in hex separated by spaces, from most significant to least significant.
      * 
-     * @return std::string 
+     * @return std::string hex string representation
      */
     std::string toString() const;
 
     /**
-     * @brief Sum current value with input bit value.
+     * @brief Add a value at the given word index.
      * 
-     * @param i uint64_t input value
-     * @param index index of bit
+     * @param i uint64_t value to add
+     * @param index word index (0 = least significant word)
      */
     void add(uint64_t i, uint64_t index);
 
     /**
-     * @brief Substract input bit value from current value.
+     * @brief Subtract input bit value from current value at the given word index.
      * 
-     * @param i uint64_t input value
-     * @param index index of bit
+     * @param i uint64_t value to subtract
+     * @param index word index (0 = least significant word)
      */
     void substract(uint64_t i, uint64_t index);
 

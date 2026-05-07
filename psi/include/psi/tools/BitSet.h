@@ -46,29 +46,29 @@ public:
     /**
      * @brief Return number of bits in an object.
      * 
-     * @return size_t 
+     * @return size_t total number of bits
      */
     size_t size() const;
 
     /**
-     * @brief Set or unset bit.
+     * @brief Set or unset a bit.
      * 
-     * @param bitNumber Number of bit
-     * @param set Set/unset, bool
+     * @param bitNumber 0-based index of the bit to modify
+     * @param set true to set the bit, false to clear it (default: true)
      */
     void set(size_t bitNumber, bool set = true);
 
     /**
-     * @brief Test bit.
+     * @brief Test whether a bit is set.
      * 
-     * @param bitNumber Number of bit
-     * @return true 
-     * @return false 
+     * @param bitNumber 0-based index of the bit to test
+     * @return true if the bit is set
+     * @return false if the bit is not set
      */
     bool test(size_t bitNumber) const;
 
     /**
-     * @brief Inverse all bits.
+     * @brief Flip (invert) all bits.
      * 
      */
     void inverse();
@@ -81,8 +81,9 @@ public:
 
     /**
      * @brief Represent as string.
+     * Each character is '0' or '1', ordered from the most significant to the least significant bit.
      * 
-     * @return std::string 
+     * @return std::string string representation of all bits
      */
     const std::string toString() const;
 

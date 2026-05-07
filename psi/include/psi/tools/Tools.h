@@ -1,6 +1,9 @@
 #pragma once
 
 #include <algorithm>
+#include <chrono>
+#include <cstdio>
+#include <ctime>
 #include <functional>
 #include <future>
 #include <iomanip>
@@ -8,6 +11,7 @@
 #include <locale>
 #include <span>
 #include <sstream>
+#include <string>
 #include <vector>
 
 namespace psi::tools {
@@ -38,6 +42,67 @@ inline std::string to_hex_string(uint8_t *buffer, size_t sz)
     }
 
     return result;
+}
+
+/// Converts a system_clock time_point to an ISO-8601 string with millisecond
+/// precision, e.g. "2026-05-06T00:32:26.347Z".
+inline std::string to_iso_8601(std::chrono::system_clock::time_point tp)
+{
+    std::time_t t = std::chrono::system_clock::to_time_t(tp);
+    struct tm tmBuf {};
+#if defined(_WIN32)
+    gmtime_s(&tmBuf, &t);
+#else
+    gmtime_r(&t, &tmBuf);
+#endif
+    auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(tp.time_since_epoch()) % 1000;
+    char buf[32];
+    std::strftime(buf, sizeof(buf), "%Y-%m-%dT%H:%M:%S", &tmBuf);
+    char out[40];
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunsafe-buffer-usage-in-libc-call"
+    std::snprintf(out, sizeof(out), "%s.%03dZ", buf, static_cast<int>(ms.count()));
+#pragma clang diagnostic pop
+    return out;
+}
+
+/// Parses a basic ISO-8601 UTC string (e.g. "2026-05-06T00:32:26Z") back to
+/// a system_clock time_point.  Returns now() on parse failure.
+inline std::chrono::system_clock::time_point from_iso_8601(const char *s)
+{
+    if (!s || s[0] == '\0') {
+        return std::chrono::system_clock::now();
+    }
+    struct tm tmBuf {};
+#if defined(_WIN32)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunsafe-buffer-usage-in-libc-call"
+    sscanf_s(s, "%d-%d-%dT%d:%d:%dZ",
+             &tmBuf.tm_year, &tmBuf.tm_mon, &tmBuf.tm_mday,
+             &tmBuf.tm_hour, &tmBuf.tm_min, &tmBuf.tm_sec);
+#pragma clang diagnostic pop
+#else
+    sscanf(s, "%d-%d-%dT%d:%d:%dZ",
+           &tmBuf.tm_year, &tmBuf.tm_mon, &tmBuf.tm_mday,
+           &tmBuf.tm_hour, &tmBuf.tm_min, &tmBuf.tm_sec);
+#endif
+    tmBuf.tm_year -= 1900;
+    tmBuf.tm_mon  -= 1;
+    std::time_t t =
+#if defined(_WIN32)
+        _mkgmtime(&tmBuf);
+#else
+        timegm(&tmBuf);
+#endif
+    return std::chrono::system_clock::from_time_t(t);
+}
+
+/// Returns toIso8601(tp), or an empty string when tp is the default epoch value.
+inline std::string optional_iso_8601(std::chrono::system_clock::time_point tp)
+{
+    if (tp == std::chrono::system_clock::time_point{})
+        return {};
+    return to_iso_8601(tp);
 }
 
 /**
@@ -194,18 +259,22 @@ inline std::string to_upper(const std::string &str) noexcept
 }
 
 /**
- * @brief Converts input utf-8 formatted string to wstring
+ * @brief Converts a UTF-8 encoded string to a wide string.
+ * Uses the platform-native wide encoding (UTF-16 on Windows, UTF-32 on Linux/macOS).
  * 
- * @return std::wstring new string
+ * @param str UTF-8 encoded input string
+ * @return std::wstring wide string representation
  */
-std::wstring utf8_to_wstring(const std::string &) noexcept;
+std::wstring utf8_to_wstring(const std::string &str) noexcept;
 
 /**
- * @brief Converts input wstring to utf-8 formatted string
+ * @brief Converts a wide string to a UTF-8 encoded string.
+ * Uses the platform-native wide encoding (UTF-16 on Windows, UTF-32 on Linux/macOS).
  * 
- * @return std::string new string
+ * @param str wide string input
+ * @return std::string UTF-8 encoded representation
  */
-std::string wstring_to_utf8(const std::wstring &) noexcept;
+std::string wstring_to_utf8(const std::wstring &str) noexcept;
 
 /**
  * @brief Generates current timestamp in a string format.
@@ -216,12 +285,14 @@ std::string wstring_to_utf8(const std::wstring &) noexcept;
 std::string generateTimeStamp() noexcept;
 
 /**
- * @brief Converts async function call to sync call.
- * The default timeout is: 10 seconds
+ * @brief Converts an async callback-based function into a blocking call.
+ * Blocks until the callback is invoked or the timeout elapses.
+ * On timeout, @p arg is set to a default-constructed Arg().
  * 
- * @tparam Arg type of argument to be sent by async function
- * @param fn async function
- * @param arg argument to be sent by async function
+ * @tparam Arg type of the result value delivered by the async function
+ * @param fn async function that accepts a callback of type void(Arg)
+ * @param arg (out) result value filled in by the async function
+ * @param timeout maximum wait time in seconds (default: 10)
  */
 template <typename Arg>
 void convertToSyncCall(std::function<void(std::function<void(Arg)>)> fn, Arg &arg, uint8_t timeout = 10) noexcept
@@ -263,11 +334,11 @@ inline std::string objName(const T &obj) noexcept
 }
 
 /**
- * @brief Swaps endianess 
+ * @brief Reverses the byte order (endianness) of a trivially-copyable value.
  * 
- * @tparam T T
- * @param val val
- * @return T T
+ * @tparam T trivially-copyable type
+ * @param val input value
+ * @return T value with bytes in reversed order
  */
 template <typename T>
 inline T swapEndian(const T &val)

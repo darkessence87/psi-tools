@@ -132,7 +132,10 @@ public:
     void resetWrite() const;
 
     /**
+     * @brief Resize the buffer to exactly @p sz bytes.
+     * Existing data within the new size is preserved. Read and write indices are clamped to the new size.
      * 
+     * @param sz new size in bytes
      */
     void resize(size_t sz);
 
@@ -242,8 +245,9 @@ public:
     /**
      * @brief Read custom data array from ByteBuffer.
      * 
-     * @tparam T type of custom data array
-     * @tparam N number of elements in a custom data array
+     * @tparam T element type of the data array
+     * @tparam N number of elements in the data array
+     * @param data reference to the destination array to read into
      * @return true if operation is successful, readIndex is increased by total size of custom data type
      * @return false if operation is failed, readIndex is not changed
      */
@@ -263,10 +267,12 @@ public:
     }
 
     /**
-     * @brief Read N bytes into custom data array from ByteBuffer.
+     * @brief Read @p sz bytes from ByteBuffer into @p data.
      * 
-     * @tparam T type of custom data array
-     * @return true if operation is successful, readIndex is increased by total size of custom data type
+     * @tparam T element type of the destination buffer
+     * @param data pointer to the destination buffer
+     * @param sz number of bytes to read
+     * @return true if operation is successful, readIndex is increased by @p sz
      * @return false if operation is failed, readIndex is not changed
      */
     template <typename T>
@@ -370,13 +376,17 @@ public:
     /**
      * @brief Return value of specified byte from ByteBuffer.
      * 
-     * @param pos poisition of byte
+     * @param pos position of byte
      * @return uint8_t value
      */
     uint8_t at(const size_t pos) const;
 
     /**
+     * @brief Return a reference to the byte at position @p pos.
+     * No bounds checking is performed.
      * 
+     * @param pos 0-based position of the byte
+     * @return uint8_t& reference to the byte at the given position
      */
     uint8_t& operator[](const size_t pos) const;
 
@@ -425,9 +435,11 @@ public:
     std::string asString() const;
 
     /**
-     * @brief Convert ByteBuffer to std::array
+     * @brief Read N elements of type T from the current readIndex into a std::array.
      * 
-     * @return std::array<> array
+     * @tparam T element type
+     * @tparam N number of elements
+     * @return std::array<T, N> array filled with data read from the buffer
      */
     template <typename T, size_t N>
     std::array<T, N> asArray() const
