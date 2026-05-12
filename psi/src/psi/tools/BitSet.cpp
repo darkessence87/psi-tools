@@ -1,5 +1,6 @@
 #include "psi/tools/BitSet.h"
 
+#include <cstring>
 #include <vector>
 
 namespace psi::tools {
@@ -81,7 +82,7 @@ static auto fill64Bin(const uint8_t *data, size_t bitsNumber)
         if (c == '1') {
             value |= 1ull << k;
         } else if (c != '0') {
-            return 0ull;
+            return value = 0;
         }
     }
     return value;

@@ -3,7 +3,9 @@
 
 #include "psi/tools/Tools.h"
 
+#ifdef _WIN32
 #include <Windows.h>
+#endif
 
 #include <codecvt>
 #include <locale>
