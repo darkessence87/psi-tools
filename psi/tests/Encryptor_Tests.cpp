@@ -7,6 +7,7 @@
 
 #include "psi/tools/Encryptor.h"
 #include "psi/tools/Tools.h"
+#include "psi/tools/crypt/aes.h"
 
 using namespace psi::test;
 using namespace psi::tools;
@@ -592,4 +593,43 @@ TEST(EncryptorTests, X25519_ScalarmultBase_KnownVector)
     ByteBuffer privKey("49af42ba7f7994852d713ef2784bcbcaa7911de26adc5642cb634540e7ea5005", true);
     auto pubKey = Encryptor::x25519_scalarmult_base(privKey);
     EXPECT_EQ(pubKey.asHexString(), "99381de560e4bd43d23d8e435a7dbafeb3c06e51c13cae4d5413691e529aaf2c");
+}
+
+TEST(EncryptorTests, Aes_Transpose_SwapsOffDiagonal)
+{
+    using namespace psi::tools::crypt;
+    // Build a known DataBlock16 (4x4 of uint8_t arrays)
+    aes::DataBlock16 block = {{
+        {0x00, 0x01, 0x02, 0x03},
+        {0x10, 0x11, 0x12, 0x13},
+        {0x20, 0x21, 0x22, 0x23},
+        {0x30, 0x31, 0x32, 0x33}
+    }};
+    aes::transpose(block);
+    // After transpose, block[i][j] == original[j][i]
+    EXPECT_EQ(block[0][0], uint8_t{0x00});
+    EXPECT_EQ(block[0][1], uint8_t{0x10});
+    EXPECT_EQ(block[0][2], uint8_t{0x20});
+    EXPECT_EQ(block[0][3], uint8_t{0x30});
+    EXPECT_EQ(block[1][0], uint8_t{0x01});
+    EXPECT_EQ(block[2][0], uint8_t{0x02});
+    EXPECT_EQ(block[3][0], uint8_t{0x03});
+}
+
+TEST(EncryptorTests, EncryptAes128_WrongKeySize_ReturnsEmpty)
+{
+    using namespace psi::tools::crypt;
+    ByteBuffer data("hello", false);
+    ByteBuffer badKey(8u); // AES-128 needs 16 bytes
+    auto result = aes::encryptAes_impl<4u, 10u>(data, badKey);
+    EXPECT_EQ(result.size(), size_t{0});
+}
+
+TEST(EncryptorTests, DecryptAes128_WrongKeySize_ReturnsEmpty)
+{
+    using namespace psi::tools::crypt;
+    ByteBuffer data("hello", false);
+    ByteBuffer badKey(8u);
+    auto result = aes::decryptAes_impl<4u, 10u>(data, badKey);
+    EXPECT_EQ(result.size(), size_t{0});
 }

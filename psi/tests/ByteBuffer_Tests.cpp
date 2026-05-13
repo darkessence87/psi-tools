@@ -1003,3 +1003,60 @@ TEST(ByteBuffer_Tests, performance)
         },
         100000);
 }
+
+TEST(ByteBuffer_Tests, copy_assignment_self)
+{
+    ByteBuffer data(new uint8_t[3] {'x', 'y', 'z'}, 3);
+    data.skipWrite(3);
+    data = data; // self-assignment: must be a no-op
+    EXPECT_EQ(data.size(), 3u);
+    EXPECT_EQ(data.at(0), uint8_t('x'));
+}
+
+TEST(ByteBuffer_Tests, operator_plus_equals)
+{
+    ByteBuffer a(3u);
+    a.writeString("abc");
+    ByteBuffer b(3u);
+    b.writeString("def");
+
+    a += b;
+
+    EXPECT_EQ(a.size(), 6u);
+    a.resetRead();
+    std::string result;
+    a.readString(result, 6u);
+    EXPECT_EQ(result, "abcdef");
+}
+
+TEST(ByteBuffer_Tests, at_out_of_bounds_returns_zero)
+{
+    ByteBuffer data(new uint8_t[3] {'a', 'b', 'c'}, 3);
+    EXPECT_EQ(data.at(3), uint8_t('\0'));
+    EXPECT_EQ(data.at(100), uint8_t('\0'));
+}
+
+TEST(ByteBuffer_Tests, readLine_long_line_flushes_cache)
+{
+    // Line longer than BLOCK_SZ (64) triggers the cache flush path
+    std::string longLine(100, 'x');
+    ByteBuffer data(100u);
+    data.writeString(longLine);
+
+    std::string result;
+    data.readLine(result);
+    EXPECT_EQ(result.size(), 100u);
+    EXPECT_EQ(result, longLine);
+}
+
+TEST(ByteBuffer_Tests, readToByteBuffer_no_size_write_overflow)
+{
+    // readToByteBuffer(ByteBuffer&) no-size overload: target buffer too small
+    ByteBuffer src(5u);
+    src.writeString("hello");
+
+    ByteBuffer dst(3u); // too small for 5 bytes
+    dst.writeString("ab"); // 2 bytes written, only 1 left
+
+    EXPECT_EQ(false, src.readToByteBuffer(dst));
+}
