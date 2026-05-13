@@ -285,3 +285,46 @@ TEST(aes_gcm_Tests, encrypt_decrypt)
            "cafebabefacedbad");
     doTest("// case 6.", "010203040506070809aaabbccddeeff", "00112233445566778899aabbccddeeff", "1234567890abcdef");
 }
+
+TEST(aes_gcm_Tests, encrypt_3arg_no_tag)
+{
+    // 3-arg overload: encrypt(data, key, iv) — discards tag
+    const ByteBuffer key("00000000000000000000000000000000", true);
+    const ByteBuffer data("00000000000000000000000000000000", true);
+    ByteBuffer iv(16);
+    iv.writeHexString("000000000000000000000000");
+
+    ByteBuffer encodedData = aes_gcm::encrypt(data, key, iv);
+    EXPECT_EQ(encodedData.asHexString(), "0388dace60b6a392f328c2b971b2fe78");
+}
+
+TEST(aes_gcm_Tests, decrypt_3arg_no_iv)
+{
+    // 3-arg overload: decrypt(data, key, tag) — uses empty IV (triggers GHASH counter path)
+    const ByteBuffer key("00000000000000000000000000000000", true);
+    const ByteBuffer data("00000000000000000000000000000000", true);
+    ByteBuffer iv_empty;
+
+    aes_gcm::Tag tag = {};
+    auto encoded = aes_gcm::encrypt(data, key, iv_empty, tag);
+
+    ByteBuffer tagBuffer(16u);
+    tagBuffer.write(tag);
+    data.resetRead();
+
+    auto decoded = aes_gcm::decrypt(encoded, key, tagBuffer);
+    EXPECT_EQ(decoded.asHexString(), data.asHexString());
+}
+
+TEST(aes_gcm_Tests, decrypt_wrong_tag_returns_empty)
+{
+    // Wrong tag causes decrypt to return empty buffer
+    const ByteBuffer key("00000000000000000000000000000000", true);
+    const ByteBuffer encodedData("0388dace60b6a392f328c2b971b2fe78", true);
+    ByteBuffer iv(16);
+    iv.writeHexString("000000000000000000000000");
+    const ByteBuffer wrongTag("ffffffffffffffffffffffffffffffff", true);
+
+    ByteBuffer result = aes_gcm::decrypt(encodedData, key, iv, wrongTag);
+    EXPECT_EQ(result.size(), size_t{0});
+}

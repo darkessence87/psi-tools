@@ -505,3 +505,91 @@ TEST(EncryptorTests, performance)
     };
     TestHelper::timeFn("1. Tls13Handshake", tlsHandshake, 1000);
 }
+
+TEST(EncryptorTests, EncryptDecryptBase64_Roundtrip)
+{
+    ByteBuffer data(5u);
+    data.writeString("hello");
+
+    auto encoded = Encryptor::encryptBase64(data);
+    ASSERT_GE(encoded.size(), size_t{1});
+
+    encoded.resetRead();
+    auto decoded = Encryptor::decryptBase64(encoded);
+    EXPECT_EQ(decoded.asString(), "hello");
+}
+
+TEST(EncryptorTests, EncryptDecryptAes128Gcm_Roundtrip)
+{
+    ByteBuffer key(16u);
+    key.writeHexString("000102030405060708090a0b0c0d0e0f");
+
+    ByteBuffer iv(12u);
+    iv.writeHexString("000000000000000000000000");
+
+    ByteBuffer plaintext(5u);
+    plaintext.writeString("hello");
+
+    ByteBuffer acc;
+    ByteBuffer tag(16u);
+
+    auto ciphertext = Encryptor::encryptAes128Gcm(plaintext, key, iv, tag, acc);
+    ASSERT_GE(ciphertext.size(), size_t{1});
+
+    key.resetRead();
+    iv.resetRead();
+    tag.resetRead();
+    auto decrypted = Encryptor::decryptAes128Gcm(ciphertext, key, iv, tag, acc);
+    EXPECT_EQ(decrypted.asString(), "hello");
+}
+
+TEST(EncryptorTests, Hkdf256_ReturnsRequestedLength)
+{
+    ByteBuffer key(32u);
+    key.writeHexString("000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f");
+
+    ByteBuffer seed(32u);
+    seed.writeHexString("000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f");
+
+    ByteBuffer info;
+
+    auto result = Encryptor::hkdf256(key, seed, info, 32u);
+    EXPECT_EQ(result.size(), size_t{32});
+}
+
+TEST(EncryptorTests, Hkdf256Expand_ReturnsRequestedLength)
+{
+    // PRK from RFC 5869 test case 1
+    ByteBuffer prk(32u);
+    prk.writeHexString("077709362c2e32df0ddc3f0dc47bba6390b6c73bb50f9c3122ec844ad7c2b3e5");
+
+    ByteBuffer info(10u);
+    info.writeHexString("f0f1f2f3f4f5f6f7f8f9");
+
+    auto result = Encryptor::hkdf256Expand(prk, info, 32u);
+    EXPECT_EQ(result.size(), size_t{32});
+}
+
+TEST(EncryptorTests, GenerateSessionKey_Returns32Bytes)
+{
+    auto key = Encryptor::generateSessionKey();
+    EXPECT_EQ(key.size(), size_t{32});
+}
+
+TEST(EncryptorTests, X25519_GenerateKeypair_MatchesScalarmultBase)
+{
+    ByteBuffer pubKey(32u);
+    ByteBuffer privKey(32u);
+    Encryptor::x25519_generate_keypair(pubKey, privKey);
+
+    auto derivedPubKey = Encryptor::x25519_scalarmult_base(privKey);
+    EXPECT_EQ(pubKey.asHexString(), derivedPubKey.asHexString());
+}
+
+TEST(EncryptorTests, X25519_ScalarmultBase_KnownVector)
+{
+    // From TLS test: scalarmult_base(clientPrivateKey) == clientPublicKey
+    ByteBuffer privKey("49af42ba7f7994852d713ef2784bcbcaa7911de26adc5642cb634540e7ea5005", true);
+    auto pubKey = Encryptor::x25519_scalarmult_base(privKey);
+    EXPECT_EQ(pubKey.asHexString(), "99381de560e4bd43d23d8e435a7dbafeb3c06e51c13cae4d5413691e529aaf2c");
+}
